@@ -5,6 +5,7 @@
  * @rote-frontmatter
  * ---
  * name: play-change-review
+ * source: https://github.com/saikiranpulagalla/play-change-review
  * description: "You trusted one Play version. What changed in the next one? Compares two immutable releases of the same Play across inputs, declared access, runtime requirements, execution structure and artifact identity without executing either reviewed Play."
  * provenance:
  *   author: Sai

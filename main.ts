@@ -18,6 +18,14 @@
  *   format: typescript
  *   requires_endpoints: []
  *   requires_sessions: false
+ *   contract:
+ *     atomic: true
+ *     input:
+ *       type: none
+ *     output:
+ *       format: json
+ *       destination: stdout
+ *     composable: true
  *   discoverability:
  *     tags:
  *     - rote-playoffs

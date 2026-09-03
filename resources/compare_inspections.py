@@ -225,6 +225,62 @@ def identity_text(value):
     )
 
 
+def emit_comparison_blocked(
+    code,
+    detail,
+    approved_identity=None,
+    candidate_identity=None,
+):
+    """
+    Return a valid comparison-level BLOCKED result.
+
+    This is distinct from fail(), which represents comparator
+    execution/input failure and exits nonzero.
+
+    Ambiguous inspection evidence is a valid review conclusion:
+    PCR successfully inspected the releases but cannot compare
+    contradictory semantic identities safely.
+    """
+
+    result = {
+        "schema": "play-change-review/v1",
+        "ok": False,
+        "verdict": "BLOCKED",
+        "comparison_performed": False,
+        "error_code": code,
+        "detail": bounded_text(
+            detail,
+            1000,
+        ),
+        "approved": {
+            "identity": (
+                identity_text(approved_identity)
+                if approved_identity
+                else "unavailable"
+            ),
+        },
+        "candidate": {
+            "identity": (
+                identity_text(candidate_identity)
+                if candidate_identity
+                else "unavailable"
+            ),
+        },
+        "reason_codes": [code],
+        "reviewed_plays_executed": False,
+        "limitations": [
+            (
+                "The inspected release structure was ambiguous, "
+                "so no semantic comparison was performed."
+            ),
+            "Neither reviewed Play was executed.",
+        ],
+    }
+
+    emit_result(result)
+    raise SystemExit(0)
+
+
 def canonical(value):
     return json.dumps(
         value,
@@ -297,6 +353,58 @@ def set_delta(old_values, new_values):
     ]
 
     return added, removed
+
+
+def duplicate_identity(
+    values,
+    key,
+    label,
+    allow_string=False,
+):
+    """
+    Detect ambiguous duplicate semantic identities without
+    broadening this stage into general schema validation.
+
+    Missing/unrecognized entries retain existing behavior.
+    Only two recognized entries claiming the same semantic
+    identity are rejected here.
+    """
+
+    if not isinstance(values, list):
+        return None
+
+    seen = set()
+
+    for value in values:
+        identity_value = None
+
+        if (
+            allow_string
+            and isinstance(value, str)
+            and value
+        ):
+            identity_value = value
+
+        elif isinstance(value, dict):
+            candidate = value.get(key)
+
+            if candidate:
+                identity_value = str(candidate)
+
+        if identity_value is None:
+            continue
+
+        identity_value = str(identity_value)
+
+        if identity_value in seen:
+            return (
+                f"{label} contains duplicate semantic "
+                f"identity {identity_value!r}."
+            )
+
+        seen.add(identity_value)
+
+    return None
 
 
 def by_name(values, key="name"):
@@ -433,6 +541,88 @@ candidate = parse_inspection(candidate_raw, "candidate")
 
 aid = identity(approved)
 cid = identity(candidate)
+
+
+def check_ambiguous_structure(
+    play,
+    side,
+    approved_identity,
+    candidate_identity,
+):
+    requirements = play.get("requirements") or {}
+    package = play.get("package") or {}
+    authentication = play.get("authentication") or {}
+
+    checks = (
+        (
+            play.get("parameters"),
+            "name",
+            f"{side}.parameters",
+            False,
+        ),
+        (
+            play.get("steps"),
+            "name",
+            f"{side}.steps",
+            False,
+        ),
+        (
+            requirements.get("runtimes"),
+            "name",
+            f"{side}.requirements.runtimes",
+            False,
+        ),
+        (
+            package.get("tools"),
+            "id",
+            f"{side}.package.tools",
+            False,
+        ),
+        (
+            requirements.get("endpoints"),
+            "endpoint",
+            f"{side}.requirements.endpoints",
+            True,
+        ),
+        (
+            authentication.get("adapters"),
+            "adapter",
+            f"{side}.authentication.adapters",
+            True,
+        ),
+    )
+
+    for values, key, label, allow_string in checks:
+        detail = duplicate_identity(
+            values,
+            key,
+            label,
+            allow_string=allow_string,
+        )
+
+        if detail is not None:
+            emit_comparison_blocked(
+                "AMBIGUOUS_INSPECTION_STRUCTURE",
+                detail,
+                approved_identity,
+                candidate_identity,
+            )
+
+
+check_ambiguous_structure(
+    approved,
+    "approved",
+    aid,
+    cid,
+)
+
+check_ambiguous_structure(
+    candidate,
+    "candidate",
+    aid,
+    cid,
+)
+
 
 changes = []
 

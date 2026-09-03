@@ -233,6 +233,48 @@ def canonical(value):
     )
 
 
+def disclosed_value(obj, field):
+    """
+    Distinguish unknown disclosure from an explicitly
+    disclosed empty value.
+
+    Missing key or explicit null => not disclosed.
+    Any non-null value => disclosed.
+
+    Type validation remains a separate hardening concern;
+    this helper deliberately does not broaden Stage 2A.
+    """
+    if not isinstance(obj, dict):
+        return False, None
+
+    if field not in obj:
+        return False, None
+
+    value = obj[field]
+
+    if value is None:
+        return False, None
+
+    return True, value
+
+
+def normalized_valid_values(value):
+    """
+    valid_values is an acceptance set, not an ordered UI list.
+
+    Preserve None/non-list shapes for compatibility, but
+    compare actual lists as canonical value sets so ordering
+    and duplicate entries do not create false method changes.
+    """
+    if not isinstance(value, list):
+        return value
+
+    return sorted({
+        canonical(item)
+        for item in value
+    })
+
+
 def set_map(values):
     result = {}
     for value in values or []:
@@ -579,18 +621,54 @@ if artifact_identity_disclosure_changed:
     )
 
 
-old_files = (approved.get("package") or {}).get("files") or []
-new_files = (candidate.get("package") or {}).get("files") or []
+old_package = approved.get("package") or {}
+new_package = candidate.get("package") or {}
 
-files_added, files_removed = set_delta(old_files, new_files)
+old_files_disclosed, old_files = disclosed_value(
+    old_package,
+    "files",
+)
 
-if files_added or files_removed:
+new_files_disclosed, new_files = disclosed_value(
+    new_package,
+    "files",
+)
+
+files_comparison_available = (
+    old_files_disclosed
+    and new_files_disclosed
+)
+
+files_added = []
+files_removed = []
+
+if files_comparison_available:
+    files_added, files_removed = set_delta(
+        old_files,
+        new_files,
+    )
+
+    if files_added or files_removed:
+        add(
+            "PACKAGE_FILESET_CHANGED",
+            "artifact",
+            (
+                f"{len(files_added)} package file(s) added; "
+                f"{len(files_removed)} removed."
+            ),
+            material=False,
+        )
+
+elif old_files_disclosed != new_files_disclosed:
     add(
-        "PACKAGE_FILESET_CHANGED",
-        "artifact",
+        "PACKAGE_FILESET_DISCLOSURE_CHANGED",
+        "disclosure",
         (
-            f"{len(files_added)} package file(s) added; "
-            f"{len(files_removed)} removed."
+            "package.files disclosure changed: "
+            f"approved="
+            f"{'known' if old_files_disclosed else 'unknown'}, "
+            f"candidate="
+            f"{'known' if new_files_disclosed else 'unknown'}"
         ),
         material=False,
     )
@@ -680,10 +758,60 @@ for name in sorted(old_params.keys() & new_params.keys()):
                 ),
             )
 
+    for field, code in (
+        (
+            "description",
+            "PARAMETER_DESCRIPTION_CHANGED",
+        ),
+        (
+            "example",
+            "PARAMETER_EXAMPLE_CHANGED",
+        ),
+    ):
+        if old.get(field) != new.get(field):
+            add(
+                code,
+                "input",
+                (
+                    f"{name}.{field}: "
+                    f"{old.get(field)!r} -> "
+                    f"{new.get(field)!r}"
+                ),
+                material=False,
+            )
+
+    old_input = old.get("input") or {}
+    new_input = new.get("input") or {}
+
+    old_label = old_input.get("label")
+    new_label = new_input.get("label")
+
+    if old_label != new_label:
+        add(
+            "PARAMETER_LABEL_CHANGED",
+            "input",
+            (
+                f"{name}.input.label: "
+                f"{old_label!r} -> {new_label!r}"
+            ),
+            material=False,
+        )
+
     old_valid = old.get("valid_values")
     new_valid = new.get("valid_values")
 
-    if old_valid != new_valid:
+    old_valid_normalized = normalized_valid_values(
+        old_valid
+    )
+
+    new_valid_normalized = normalized_valid_values(
+        new_valid
+    )
+
+    if (
+        old_valid_normalized
+        != new_valid_normalized
+    ):
         add(
             "PARAMETER_VALID_VALUES_CHANGED",
             "input",
@@ -799,13 +927,54 @@ for field, domain, added_code, removed_code in (
 # A fingerprint change is a material identity change, not an
 # endpoint expansion.
 
-old_endpoints = endpoint_map(
-    old_req.get("endpoints")
+old_endpoints_disclosed, old_endpoints_raw = (
+    disclosed_value(
+        old_req,
+        "endpoints",
+    )
 )
 
-new_endpoints = endpoint_map(
-    new_req.get("endpoints")
+new_endpoints_disclosed, new_endpoints_raw = (
+    disclosed_value(
+        new_req,
+        "endpoints",
+    )
 )
+
+endpoints_comparison_available = (
+    old_endpoints_disclosed
+    and new_endpoints_disclosed
+)
+
+if endpoints_comparison_available:
+    old_endpoints = endpoint_map(
+        old_endpoints_raw
+    )
+
+    new_endpoints = endpoint_map(
+        new_endpoints_raw
+    )
+
+else:
+    old_endpoints = {}
+    new_endpoints = {}
+
+    if (
+        old_endpoints_disclosed
+        != new_endpoints_disclosed
+    ):
+        add(
+            "DECLARED_ENDPOINT_DISCLOSURE_CHANGED",
+            "disclosure",
+            (
+                "requirements.endpoints disclosure changed: "
+                f"approved="
+                f"{'known' if old_endpoints_disclosed else 'unknown'}, "
+                f"candidate="
+                f"{'known' if new_endpoints_disclosed else 'unknown'}"
+            ),
+            material=False,
+        )
 
 for endpoint in sorted(
     old_endpoints.keys() - new_endpoints.keys()
@@ -1379,24 +1548,66 @@ result = {
     },
 
     "package_files": {
-        "added_total": len(files_added),
-        "added": files_added_sample,
-        "added_omitted": (
+        "comparison_available":
+            files_comparison_available,
+
+        "approved_disclosed":
+            old_files_disclosed,
+
+        "candidate_disclosed":
+            new_files_disclosed,
+
+        "added_total": (
             len(files_added)
-            - len(files_added_sample)
+            if files_comparison_available
+            else None
         ),
-        "removed_total": len(files_removed),
-        "removed": files_removed_sample,
-        "removed_omitted": (
+
+        "added": (
+            files_added_sample
+            if files_comparison_available
+            else []
+        ),
+
+        "added_omitted": (
+            (
+                len(files_added)
+                - len(files_added_sample)
+            )
+            if files_comparison_available
+            else None
+        ),
+
+        "removed_total": (
             len(files_removed)
-            - len(files_removed_sample)
+            if files_comparison_available
+            else None
         ),
+
+        "removed": (
+            files_removed_sample
+            if files_comparison_available
+            else []
+        ),
+
+        "removed_omitted": (
+            (
+                len(files_removed)
+                - len(files_removed_sample)
+            )
+            if files_comparison_available
+            else None
+        ),
+
         "truncated": (
-            len(files_added_sample)
-                < len(files_added)
-            or
-            len(files_removed_sample)
-                < len(files_removed)
+            files_comparison_available
+            and (
+                len(files_added_sample)
+                    < len(files_added)
+                or
+                len(files_removed_sample)
+                    < len(files_removed)
+            )
         ),
     },
 

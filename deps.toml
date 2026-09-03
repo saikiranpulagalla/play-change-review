@@ -5,7 +5,19 @@ id = "rote"
 command = "rote"
 required = true
 
+[[tools.install]]
+manager = "system"
+notes = "Install Rote CLI: curl -fsSL https://raw.githubusercontent.com/modiqo/rote-releases/main/install.sh | bash"
+
 [[tools]]
 id = "python3"
 command = "python3"
 required = true
+
+[[tools.install]]
+manager = "brew"
+package = "python@3"
+
+[[tools.install]]
+manager = "apt"
+package = "python3"

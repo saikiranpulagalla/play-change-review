@@ -25,7 +25,7 @@
  * metadata:
  *   rote_version: 0.78.0
  *   version: 0.1.0
- *   status: draft
+ *   status: released
  *   kind: atomic
  *   flow_type: parallel
  *   execution_model: steps_with_presentation

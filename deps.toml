@@ -1,0 +1,11 @@
+schema_version = 1
+
+[[tools]]
+id = "rote"
+command = "rote"
+required = true
+
+[[tools]]
+id = "python3"
+command = "python3"
+required = true

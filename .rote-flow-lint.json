@@ -1,0 +1,17 @@
+{
+  "flow_name": "main.ts",
+  "flow_path": "main.ts",
+  "static_checks_passed": true,
+  "runtime_checks_passed": true,
+  "violations": [
+    {
+      "code": "PRESENTATION_FIXTURE_REQUIRED",
+      "message": "Presentation fixture coverage is incomplete: data-bearing steps `validate_approved`, `validate_candidate`, `review_versions` have no representative fixture; referenced steps `review_versions` have no fixture-backed observation. Run the play once and copy the intended observation from `.rote/presentation/<run-id>/input.json` (`steps.<name>.outcome.output.body` for a single output), then place only representative fixture evidence under `resources/presentation-fixtures/` and declare it in `presentation_fixtures:`. Fixtures require a dedicated `<play>/main.ts` package. See `rote guidance play testing` for the evidence and fixture lifecycle.",
+      "line": null,
+      "severity": "information",
+      "is_error": false
+    }
+  ],
+  "linted_at": "2026-09-03T12:38:07.317878184Z",
+  "rote_version": "0.79.0"
+}

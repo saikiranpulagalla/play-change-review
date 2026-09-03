@@ -5,6 +5,184 @@ import sys
 from pathlib import Path
 
 
+# Keep canonical comparison output comfortably below the
+# process-step capture boundary observed during adversarial
+# scale testing.
+#
+# These limits affect evidence representation only.
+# Verdicts, counts, and reason-code sets are computed from the
+# complete comparison before evidence is bounded.
+MAX_CHANGE_EVIDENCE = 24
+MAX_CHANGE_DETAIL_CHARS = 240
+MAX_FILE_EVIDENCE_PER_DIRECTION = 8
+MAX_FILE_PATH_CHARS = 240
+MAX_RESULT_BYTES = 32768
+
+
+def bounded_text(value, limit):
+    raw = str(value)
+
+    if len(raw) <= limit:
+        return raw
+
+    return raw[:limit] + "...[truncated]"
+
+
+def encode_result(value):
+    return json.dumps(
+        value,
+        separators=(",", ":"),
+    )
+
+
+def emit_result(result):
+    """
+    Emit a comparison result within PCR's own output budget.
+
+    Normal comparison semantics are computed before this function.
+    This function may only reduce evidence samples; it must never
+    alter the verdict, complete counts, or reason-code set.
+    """
+
+    encoded = encode_result(result)
+
+    if len(encoded.encode("utf-8")) <= MAX_RESULT_BYTES:
+        print(encoded)
+        return
+
+    # Emergency second-stage compaction.
+    #
+    # The normal evidence bounds should already keep ordinary
+    # results well below MAX_RESULT_BYTES. This layer exists so
+    # future schema/detail growth cannot silently cross Rote's
+    # process-output boundary.
+    evidence = result.get("change_evidence")
+
+    if isinstance(evidence, dict):
+        total = evidence.get(
+            "total",
+            len(result.get("changes") or []),
+        )
+
+        result["changes"] = []
+
+        evidence["returned"] = 0
+        evidence["omitted"] = total
+        evidence["truncated"] = total > 0
+
+    package_files = result.get("package_files")
+
+    if isinstance(package_files, dict):
+        added_total = package_files.get("added_total")
+        removed_total = package_files.get("removed_total")
+
+        package_files["added"] = []
+        package_files["removed"] = []
+
+        if isinstance(added_total, int):
+            package_files["added_omitted"] = added_total
+
+        if isinstance(removed_total, int):
+            package_files["removed_omitted"] = removed_total
+
+        package_files["truncated"] = bool(
+            (isinstance(added_total, int) and added_total > 0)
+            or
+            (isinstance(removed_total, int) and removed_total > 0)
+        )
+
+    result["output_budget"] = {
+        "compacted": True,
+        "target_bytes": MAX_RESULT_BYTES,
+        "detail": (
+            "Evidence samples were removed to preserve the "
+            "complete verdict, counts, and reason codes."
+        ),
+    }
+
+    encoded = encode_result(result)
+
+    if len(encoded.encode("utf-8")) <= MAX_RESULT_BYTES:
+        print(encoded)
+        return
+
+    # Final fail-safe representation.
+    #
+    # Preserve semantic conclusions even if some future field
+    # unexpectedly becomes enormous. Do not fall back to a fake
+    # generic BLOCKED result merely because evidence was large.
+    compact = {
+        "schema": result.get(
+            "schema",
+            "play-change-review/v1",
+        ),
+        "ok": result.get("ok"),
+        "verdict": result.get("verdict"),
+        "comparison_performed": result.get(
+            "comparison_performed"
+        ),
+        "approved": result.get("approved"),
+        "candidate": result.get("candidate"),
+        "declared_access_expansion_observed":
+            result.get(
+                "declared_access_expansion_observed"
+            ),
+        "counts": result.get("counts"),
+        "reason_codes": result.get("reason_codes", []),
+        "changes": [],
+        "change_evidence": {
+            "total": (
+                result.get("counts", {})
+                .get("total_findings", 0)
+            ),
+            "returned": 0,
+            "omitted": (
+                result.get("counts", {})
+                .get("total_findings", 0)
+            ),
+            "truncated": True,
+        },
+        "reviewed_plays_executed":
+            result.get(
+                "reviewed_plays_executed",
+                False,
+            ),
+        "limitations":
+            result.get("limitations", []),
+        "output_budget": {
+            "compacted": True,
+            "target_bytes": MAX_RESULT_BYTES,
+            "detail": (
+                "All individual evidence samples were removed "
+                "to preserve complete semantic conclusions."
+            ),
+        },
+    }
+
+    encoded = encode_result(compact)
+
+    if len(encoded.encode("utf-8")) > MAX_RESULT_BYTES:
+        # This should be unreachable with PCR-controlled fields.
+        # If it ever happens, fail explicitly rather than allowing
+        # Rote to silently lose process output.
+        tiny = {
+            "schema": "play-change-review/v1",
+            "ok": False,
+            "verdict": "BLOCKED",
+            "error_code": "RESULT_BUDGET_EXCEEDED",
+            "detail": (
+                "PCR could not represent the comparison result "
+                "within its bounded output contract."
+            ),
+            "reviewed_plays_executed": False,
+        }
+
+        print(encode_result(tiny))
+        return
+
+    print(encoded)
+
+
 def fail(message):
     print(json.dumps({
         "schema": "play-change-review/v1",
@@ -222,8 +400,69 @@ def add(code, domain, detail, material=True):
         "code": code,
         "domain": domain,
         "material": material,
-        "detail": detail,
+        "detail": bounded_text(
+            detail,
+            MAX_CHANGE_DETAIL_CHARS,
+        ),
     })
+
+
+def bounded_changes(values):
+    """
+    Return deterministic, diverse evidence.
+
+    First preserve one representative for each reason-code type,
+    then fill remaining capacity in original comparison order.
+
+    Complete counts and reason_codes are computed from `changes`,
+    never from this bounded sample.
+    """
+
+    if len(values) <= MAX_CHANGE_EVIDENCE:
+        return list(values)
+
+    selected = []
+    selected_indexes = set()
+    represented_codes = set()
+
+    # One representative for each code while capacity remains.
+    for index, change in enumerate(values):
+        code = change.get("code")
+
+        if code in represented_codes:
+            continue
+
+        selected.append(change)
+        selected_indexes.add(index)
+        represented_codes.add(code)
+
+        if len(selected) >= MAX_CHANGE_EVIDENCE:
+            return selected
+
+    # Fill remaining capacity in original deterministic order.
+    for index, change in enumerate(values):
+        if len(selected) >= MAX_CHANGE_EVIDENCE:
+            break
+
+        if index in selected_indexes:
+            continue
+
+        selected.append(change)
+        selected_indexes.add(index)
+
+    return selected
+
+
+def bounded_file_evidence(values):
+    return [
+        bounded_text(
+            value,
+            MAX_FILE_PATH_CHARS,
+        )
+        for value in values[
+            :MAX_FILE_EVIDENCE_PER_DIRECTION
+        ]
+    ]
 
 
 # ------------------------------------------------------------------
@@ -1074,6 +1313,17 @@ else:
     verdict = "NO_MATERIAL_VISIBLE_CHANGE_OBSERVED"
 
 
+bounded_change_list = bounded_changes(changes)
+
+files_added_sample = bounded_file_evidence(
+    files_added
+)
+
+files_removed_sample = bounded_file_evidence(
+    files_removed
+)
+
+
 result = {
     "schema": "play-change-review/v1",
     "ok": True,
@@ -1110,11 +1360,44 @@ result = {
     },
 
     "reason_codes": reason_codes,
-    "changes": changes,
+
+    # Evidence is deliberately bounded. Semantic totals above are
+    # complete and are always computed before sampling.
+    "changes": bounded_change_list,
+
+    "change_evidence": {
+        "total": len(changes),
+        "returned": len(bounded_change_list),
+        "omitted": (
+            len(changes)
+            - len(bounded_change_list)
+        ),
+        "truncated": (
+            len(bounded_change_list)
+            < len(changes)
+        ),
+    },
 
     "package_files": {
-        "added": files_added,
-        "removed": files_removed,
+        "added_total": len(files_added),
+        "added": files_added_sample,
+        "added_omitted": (
+            len(files_added)
+            - len(files_added_sample)
+        ),
+        "removed_total": len(files_removed),
+        "removed": files_removed_sample,
+        "removed_omitted": (
+            len(files_removed)
+            - len(files_removed_sample)
+        ),
+        "truncated": (
+            len(files_added_sample)
+                < len(files_added)
+            or
+            len(files_removed_sample)
+                < len(files_removed)
+        ),
     },
 
     "disclosure_unknowns":
@@ -1139,4 +1422,4 @@ result = {
     ],
 }
 
-print(json.dumps(result, separators=(",", ":")))
+emit_result(result)

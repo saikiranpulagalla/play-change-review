@@ -172,10 +172,54 @@ const review = readProcess(
 
 let comparison: any = null;
 
+let comparisonParseFailed = false;
+
 if (review.stdout.length > 0) {
   try {
     comparison = JSON.parse(review.stdout);
-  } catch {}
+  } catch {
+    comparisonParseFailed = true;
+  }
+}
+
+// Presentation must never silently convert missing/truncated
+// process evidence into an unexplained generic BLOCKED result.
+if (comparison === null) {
+  const reviewStepFailed = review.ok !== true;
+
+  const errorCode = reviewStepFailed
+    ? "REVIEW_STEP_FAILED"
+    : comparisonParseFailed
+      ? "REVIEW_OUTPUT_INVALID_JSON"
+      : "REVIEW_OUTPUT_MISSING";
+
+  const detail = reviewStepFailed
+    ? (
+        review.stderr ||
+        "The review process step did not complete successfully."
+      )
+    : comparisonParseFailed
+      ? (
+          "The review step completed, but its recorded stdout " +
+          "was not valid JSON."
+        )
+      : (
+          "The review step completed, but no comparison result " +
+          "was recorded."
+        );
+
+  comparison = {
+    schema: "play-change-review/v1",
+    ok: false,
+    verdict: "BLOCKED",
+    error_code: errorCode,
+    detail,
+    reviewed_plays_executed: false,
+    limitations: [
+      "No comparison conclusion was produced.",
+      "Neither reviewed Play was executed.",
+    ],
+  };
 }
 
 const verdict = comparison?.verdict ?? "BLOCKED";
@@ -207,6 +251,21 @@ const reasonCodes =
   Array.isArray(comparison?.reason_codes)
     ? comparison.reason_codes
     : [];
+
+const totalFindingCount =
+  comparison?.counts?.total_findings ??
+  changes.length;
+
+const returnedEvidenceCount =
+  comparison?.change_evidence?.returned ??
+  changes.length;
+
+const omittedEvidenceCount =
+  comparison?.change_evidence?.omitted ??
+  Math.max(
+    0,
+    totalFindingCount - returnedEvidenceCount
+  );
 
 const lines: string[] = [
   "PLAY CHANGE REVIEW",
@@ -251,7 +310,13 @@ if (
 
   if (changes.length > 20) {
     lines.push(
-      `… ${changes.length - 20} more finding(s) in JSON output`
+      `… ${changes.length - 20} more sampled finding(s) in JSON output`
+    );
+  }
+
+  if (omittedEvidenceCount > 0) {
+    lines.push(
+      `… ${omittedEvidenceCount} additional finding(s) omitted from bounded evidence; counts and reason codes remain complete.`
     );
   }
 
@@ -302,9 +367,9 @@ out.result({
   },
   representations: {
     human:
-      "complete — verdict, identities, findings, reason codes and review boundary",
+      "complete — verdict, identities, bounded findings, complete counts/reason codes and review boundary",
     json:
-      "canonical — full comparison evidence or structured blocked reason",
+      "canonical — complete verdict, counts and reason codes with bounded deterministic evidence or a structured blocked reason",
     summary:
       "intentionally lossy — verdict and material change-type count",
   },

@@ -19,12 +19,12 @@
  *   - change-review
  *   - agent-governance
  *   - release-review
- * description: "You trusted one Play version. What changed in the next one? Compares two immutable releases of the same Play across inputs, declared access, runtime requirements, execution structure and artifact identity without executing either reviewed Play."
+ * description: "You trusted one Play version. What changed in the next one? Compares two immutable releases of the same Play across inputs, declared access, runtime requirements, registry-visible execution structure and artifact identity without executing either reviewed Play."
  * provenance:
  *   author: Sai
  * metadata:
  *   rote_version: 0.78.0
- *   version: 0.1.0
+ *   version: 0.1.1
  *   status: released
  *   kind: atomic
  *   flow_type: parallel

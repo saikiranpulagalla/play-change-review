@@ -1,0 +1,107 @@
+{
+  "comparison": {
+    "approved": {
+      "content_hash": "a7eb51883fd088e793fc9878db9ebc0ddd37a9861c33eac60269f1657799c435",
+      "identity": "saikiran-labs/play-change-review@0.1.0",
+      "package_digest": "installed-package-sha256-v1:388d7ab8ff53cc89ae17198476032acdbb3fcd9e000c1bf3251357d408331f21",
+      "step_count": 3
+    },
+    "candidate": {
+      "content_hash": "21bb2ecc48994343aeeaeb87cd9997e916c4325bf88aa0095006127752dcc42d",
+      "identity": "saikiran-labs/play-change-review@0.1.1",
+      "package_digest": "installed-package-sha256-v1:7511a7d666bf285e065599a48cdadd77f8098eea5a30bc5b7026988852792e1c",
+      "step_count": 3
+    },
+    "change_evidence": {
+      "omitted": 0,
+      "returned": 4,
+      "total": 4,
+      "truncated": false
+    },
+    "changes": [
+      {
+        "code": "IMPLEMENTATION_CHANGED",
+        "detail": "Known content hash and/or package digest changed.",
+        "domain": "artifact",
+        "material": false
+      },
+      {
+        "code": "PACKAGE_FILESET_CHANGED",
+        "detail": "4 package file(s) added; 0 removed.",
+        "domain": "artifact",
+        "material": false
+      },
+      {
+        "code": "DISCLOSURE_INCOMPLETE",
+        "detail": "Unknown disclosure field(s): approved.adapter_credentials, approved.browser_auth, approved.sensitivity, candidate.adapter_credentials, candidate.browser_auth, candidate.sensitivity",
+        "domain": "disclosure",
+        "material": false
+      },
+      {
+        "code": "DOCUMENTATION_CHANGED",
+        "detail": "Play description changed.",
+        "domain": "documentation",
+        "material": false
+      }
+    ],
+    "comparison_performed": true,
+    "counts": {
+      "informational_findings": 4,
+      "informational_types": 4,
+      "material_findings": 0,
+      "material_types": 0,
+      "total_findings": 4
+    },
+    "declared_access_expansion_observed": false,
+    "disclosure_unknowns": [
+      "approved.adapter_credentials",
+      "approved.browser_auth",
+      "approved.sensitivity",
+      "candidate.adapter_credentials",
+      "candidate.browser_auth",
+      "candidate.sensitivity"
+    ],
+    "limitations": [
+      "This compares registry-visible declared contracts and artifact identity; it does not establish behavioral equivalence.",
+      "No safety or maliciousness conclusion is made from an unchanged declared contract.",
+      "Unknown disclosure fields remain unknown; they are not treated as none."
+    ],
+    "ok": true,
+    "package_files": {
+      "added": [
+        "resources/tests/test_pcr_ambiguous_structure.py",
+        "resources/tests/test_pcr_output_budget.py",
+        "resources/tests/test_pcr_semantic_hardening.py",
+        "resources/tests/test_pcr_semver.py"
+      ],
+      "added_omitted": 0,
+      "added_total": 4,
+      "approved_disclosed": true,
+      "candidate_disclosed": true,
+      "comparison_available": true,
+      "removed": [],
+      "removed_omitted": 0,
+      "removed_total": 0,
+      "truncated": false
+    },
+    "reason_codes": [
+      "DISCLOSURE_INCOMPLETE",
+      "DOCUMENTATION_CHANGED",
+      "IMPLEMENTATION_CHANGED",
+      "PACKAGE_FILESET_CHANGED"
+    ],
+    "reviewed_plays_executed": false,
+    "schema": "play-change-review/v1",
+    "verdict": "IMPLEMENTATION_CHANGED_SAME_VISIBLE_CONTRACT"
+  },
+  "representations": {
+    "human": "complete \u2014 verdict, identities, bounded findings, complete counts/reason codes and review boundary",
+    "json": "canonical \u2014 complete verdict, counts and reason codes with bounded deterministic evidence or a structured blocked reason",
+    "summary": "intentionally lossy \u2014 verdict and material change-type count"
+  },
+  "schema": "play-change-review/presentation-v1",
+  "stage_ledger": {
+    "review_versions": "completed"
+  },
+  "verdict": "IMPLEMENTATION_CHANGED_SAME_VISIBLE_CONTRACT"
+}

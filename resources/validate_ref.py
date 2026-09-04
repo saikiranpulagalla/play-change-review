@@ -20,9 +20,29 @@ pattern = re.compile(
     r"(?P<owner>[A-Za-z0-9][A-Za-z0-9_-]*)/"
     r"(?P<name>[A-Za-z0-9][A-Za-z0-9_-]*)@"
     r"(?P<version>"
-    r"[0-9]+\.[0-9]+\.[0-9]+"
-    r"(?:-[0-9A-Za-z.-]+)?"
-    r"(?:\+[0-9A-Za-z.-]+)?"
+    # SemVer 2.0.0 core numeric identifiers:
+    # zero, or a non-zero digit followed by digits.
+    r"(?:0|[1-9][0-9]*)\."
+    r"(?:0|[1-9][0-9]*)\."
+    r"(?:0|[1-9][0-9]*)"
+    # Pre-release identifiers are dot-separated and non-empty.
+    # Purely numeric identifiers must not have leading zeroes.
+    # Non-numeric identifiers may contain ASCII alphanumerics
+    # and hyphens and must contain at least one non-digit.
+    r"(?:-"
+    r"(?:0|[1-9][0-9]*|"
+    r"[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
+    r"(?:\."
+    r"(?:0|[1-9][0-9]*|"
+    r"[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*"
+    r")?"
+    # Build identifiers are dot-separated and non-empty.
+    # Unlike numeric pre-release identifiers, leading zeroes
+    # are valid in build metadata.
+    r"(?:\+"
+    r"[0-9A-Za-z-]+"
+    r"(?:\.[0-9A-Za-z-]+)*"
+    r")?"
     r")$"
 )
 

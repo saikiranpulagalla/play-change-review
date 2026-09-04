@@ -1,0 +1,2 @@
+89b1250b9b73cd9acacf4417e1902a2041dbcb5207a98516fa382f0accfe1c7b  evidence/observatory/EXECUTION_PROTOCOL.md
+eb7df8998754f1d238422a3090ed6e4bd2c4bca47ee9405e5428bc975b476360  evidence/observatory/run_observatory.py

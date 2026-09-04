@@ -76,3 +76,23 @@ PCR does not establish:
 Detailed per-Play results are withheld until they can be released without
 providing active competitors with potentially actionable review information.
 Their exact contents are cryptographically committed separately.
+
+## Aggregate change profile
+
+Across the 17 deterministic adjacent-version comparisons:
+
+- 17 reported IMPLEMENTATION_CHANGED
+- 4 reported DOCUMENTATION_CHANGED
+- 1 reported PARAMETER_DESCRIPTION_CHANGED
+- 1 reported PACKAGE_FILESET_CHANGED
+- 1 reported PARAMETER_DEFAULT_CHANGED
+
+All 17 also reported DISCLOSURE_INCOMPLETE because some registry-visible
+disclosure fields remained unknown. Unknown fields were retained as unknown;
+they were not interpreted as absent.
+
+The sole material-method-change case contained a parameter default change.
+No compared pair showed a declared access expansion.
+
+This matters because a release can change what happens by default without
+expanding its declared access surface.

@@ -1,0 +1,3 @@
+
+error: --yes applies to registry plays; a local play run has no consent gate
+

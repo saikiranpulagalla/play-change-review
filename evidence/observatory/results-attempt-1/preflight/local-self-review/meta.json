@@ -1,0 +1,27 @@
+{
+  "approved_ref": "saikiran-labs/play-change-review@0.1.0",
+  "boundary_ok": false,
+  "candidate_ref": "saikiran-labs/play-change-review@0.1.1",
+  "command": [
+    "rote",
+    "play",
+    "run",
+    "/tmp/pcr-observatory-v0.1.1/main.ts",
+    "approved=saikiran-labs/play-change-review@0.1.0",
+    "candidate=saikiran-labs/play-change-review@0.1.1",
+    "--output=json",
+    "--yes"
+  ],
+  "comparison_performed": null,
+  "elapsed_seconds": 0.008104,
+  "identity_ok": false,
+  "parse_error": "ValueError: expected exactly one PCR presentation JSON object, found 0",
+  "play": "saikiran-labs/play-change-review",
+  "returncode": 2,
+  "semantic_sha256": null,
+  "stderr_bytes": 79,
+  "stdout_bytes": 0,
+  "timed_out": false,
+  "timeout_seconds": 180,
+  "valid": false
+}

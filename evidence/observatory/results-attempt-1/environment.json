@@ -1,0 +1,11 @@
+{
+  "hostname": "acer",
+  "pcr_git_commit": "bcfbece96f04470288f6d8c3c01e086093451055",
+  "pcr_main": "/tmp/pcr-observatory-v0.1.1/main.ts",
+  "platform": "Linux-5.15.167.4-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+  "rote_version": "rote 0.79.0",
+  "runs_per_pair": 3,
+  "started_at": "2026-09-04T09:32:06.368443+00:00",
+  "timeout_seconds": 180
+}

@@ -1,0 +1,13 @@
+@@status
+ok: Play: lgoyal6/dependency-confusion
+
+@@result
+version: 0.2.0
+visibility: public
+size_bytes: 36624
+downloads: 0
+installs: 0
+status: approved
+
+@@next
+- rote registry play pull lgoyal6/dependency-confusion

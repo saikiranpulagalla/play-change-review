@@ -1,0 +1,13 @@
+@@status
+ok: Play: saikiran-labs/play-change-review
+
+@@result
+version: 0.1.1
+visibility: public
+size_bytes: 32147
+downloads: 1
+installs: 0
+status: approved
+
+@@next
+- rote registry play pull saikiran-labs/play-change-review

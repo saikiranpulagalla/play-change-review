@@ -1,0 +1,13 @@
+@@status
+ok: Play: lgoyal6/unclosed-resources
+
+@@result
+version: 1.3.0
+visibility: public
+size_bytes: 39956
+downloads: 0
+installs: 0
+status: approved
+
+@@next
+- rote registry play pull lgoyal6/unclosed-resources

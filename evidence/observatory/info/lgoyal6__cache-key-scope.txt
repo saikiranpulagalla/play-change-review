@@ -1,0 +1,13 @@
+@@status
+ok: Play: lgoyal6/cache-key-scope
+
+@@result
+version: 1.1.0
+visibility: public
+size_bytes: 40693
+downloads: 0
+installs: 0
+status: approved
+
+@@next
+- rote registry play pull lgoyal6/cache-key-scope

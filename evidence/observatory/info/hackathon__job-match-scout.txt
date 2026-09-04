@@ -1,0 +1,13 @@
+@@status
+ok: Play: hackathon/job-match-scout
+
+@@result
+version: 0.1.0
+visibility: public
+size_bytes: 46544
+downloads: 3
+installs: 0
+status: approved
+
+@@next
+- rote registry play pull hackathon/job-match-scout

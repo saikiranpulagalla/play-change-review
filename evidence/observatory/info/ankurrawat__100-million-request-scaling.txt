@@ -1,0 +1,13 @@
+@@status
+ok: Play: ankurrawat/100-million-request-scaling
+
+@@result
+version: 2.0.1
+visibility: public
+size_bytes: 3564
+downloads: 0
+installs: 0
+status: approved
+
+@@next
+- rote registry play pull ankurrawat/100-million-request-scaling

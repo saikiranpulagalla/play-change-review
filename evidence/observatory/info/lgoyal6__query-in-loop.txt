@@ -1,0 +1,13 @@
+@@status
+ok: Play: lgoyal6/query-in-loop
+
+@@result
+version: 1.2.0
+visibility: public
+size_bytes: 46181
+downloads: 0
+installs: 0
+status: approved
+
+@@next
+- rote registry play pull lgoyal6/query-in-loop

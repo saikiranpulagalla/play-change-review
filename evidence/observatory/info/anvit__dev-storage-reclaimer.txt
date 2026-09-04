@@ -1,0 +1,13 @@
+@@status
+ok: Play: anvit/dev-storage-reclaimer
+
+@@result
+version: 0.4.0
+visibility: public
+size_bytes: 7604
+downloads: 1
+installs: 0
+status: approved
+
+@@next
+- rote registry play pull anvit/dev-storage-reclaimer

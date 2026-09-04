@@ -1,0 +1,13 @@
+@@status
+ok: Play: psohi-labs/polygraph
+
+@@result
+version: 0.0.11
+visibility: public
+size_bytes: 16982
+downloads: 4
+installs: 0
+status: approved
+
+@@next
+- rote registry play pull psohi-labs/polygraph

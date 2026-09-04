@@ -1,0 +1,27 @@
+PLAY CHANGE REVIEW
+
+APPROVED   saikiran-labs/play-change-review@0.1.0
+CANDIDATE  saikiran-labs/play-change-review@0.1.1
+
+VERDICT    IMPLEMENTATION_CHANGED_SAME_VISIBLE_CONTRACT
+
+DECLARED ACCESS
+No declared access expansion observed in compared fields.
+
+CHANGES
+0 material change type(s) · 4 informational type(s)
+i IMPLEMENTATION_CHANGED — Known content hash and/or package digest changed.
+i PACKAGE_FILESET_CHANGED — 4 package file(s) added; 0 removed.
+i DISCLOSURE_INCOMPLETE — Unknown disclosure field(s): approved.adapter_credentials, approved.browser_auth, approved.sensitivity, candidate.adapter_credentials, candidate.browser_auth, candidate.sensitivity
+i DOCUMENTATION_CHANGED — Play description changed.
+
+REASON CODES
+- DISCLOSURE_INCOMPLETE
+- DOCUMENTATION_CHANGED
+- IMPLEMENTATION_CHANGED
+- PACKAGE_FILESET_CHANGED
+
+BOUNDARY
+Neither reviewed Play was executed.
+This review does not establish behavioral equivalence or safety.
+Unknown disclosure fields remain unknown; they are never treated as none.

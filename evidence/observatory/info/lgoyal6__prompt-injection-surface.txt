@@ -1,0 +1,13 @@
+@@status
+ok: Play: lgoyal6/prompt-injection-surface
+
+@@result
+version: 1.1.0
+visibility: public
+size_bytes: 49085
+downloads: 1
+installs: 0
+status: approved
+
+@@next
+- rote registry play pull lgoyal6/prompt-injection-surface

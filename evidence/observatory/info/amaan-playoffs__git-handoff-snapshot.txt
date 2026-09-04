@@ -1,0 +1,13 @@
+@@status
+ok: Play: amaan-playoffs/git-handoff-snapshot
+
+@@result
+version: 0.2.2
+visibility: public
+size_bytes: 11343
+downloads: 5
+installs: 0
+status: approved
+
+@@next
+- rote registry play pull amaan-playoffs/git-handoff-snapshot

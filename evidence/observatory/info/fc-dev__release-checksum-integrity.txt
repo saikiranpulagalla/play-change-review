@@ -1,0 +1,13 @@
+@@status
+ok: Play: fc-dev/release-checksum-integrity
+
+@@result
+version: 0.0.2
+visibility: public
+size_bytes: 9595
+downloads: 2
+installs: 0
+status: approved
+
+@@next
+- rote registry play pull fc-dev/release-checksum-integrity

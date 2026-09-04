@@ -1,0 +1,13 @@
+@@status
+ok: Play: satianurag/ci-digest-guard
+
+@@result
+version: 0.4.0
+visibility: public
+size_bytes: 36988
+downloads: 1
+installs: 0
+status: approved
+
+@@next
+- rote registry play pull satianurag/ci-digest-guard

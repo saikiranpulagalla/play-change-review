@@ -1,0 +1,13 @@
+@@status
+ok: Play: lgoyal6/automation-reality
+
+@@result
+version: 0.1.0
+visibility: public
+size_bytes: 41750
+downloads: 2
+installs: 0
+status: approved
+
+@@next
+- rote registry play pull lgoyal6/automation-reality

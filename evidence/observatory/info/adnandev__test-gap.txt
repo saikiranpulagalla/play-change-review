@@ -1,0 +1,13 @@
+@@status
+ok: Play: adnandev/test-gap
+
+@@result
+version: 0.1.2
+visibility: public
+size_bytes: 16090
+downloads: 1
+installs: 0
+status: approved
+
+@@next
+- rote registry play pull adnandev/test-gap

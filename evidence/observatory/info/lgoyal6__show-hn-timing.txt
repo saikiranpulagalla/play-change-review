@@ -1,0 +1,13 @@
+@@status
+ok: Play: lgoyal6/show-hn-timing
+
+@@result
+version: 1.0.0
+visibility: public
+size_bytes: 19780
+downloads: 1
+installs: 0
+status: approved
+
+@@next
+- rote registry play pull lgoyal6/show-hn-timing

@@ -1,0 +1,13 @@
+@@status
+ok: Play: lgoyal6/llm-spend-guard
+
+@@result
+version: 0.2.0
+visibility: public
+size_bytes: 45588
+downloads: 1
+installs: 0
+status: approved
+
+@@next
+- rote registry play pull lgoyal6/llm-spend-guard

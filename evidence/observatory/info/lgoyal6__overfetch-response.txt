@@ -1,0 +1,13 @@
+@@status
+ok: Play: lgoyal6/overfetch-response
+
+@@result
+version: 0.3.0
+visibility: public
+size_bytes: 46900
+downloads: 0
+installs: 0
+status: approved
+
+@@next
+- rote registry play pull lgoyal6/overfetch-response

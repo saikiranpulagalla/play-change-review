@@ -1,0 +1,13 @@
+@@status
+ok: Play: sookra/quiet-check
+
+@@result
+version: 0.1.5
+visibility: public
+size_bytes: 24747
+downloads: 1
+installs: 0
+status: approved
+
+@@next
+- rote registry play pull sookra/quiet-check

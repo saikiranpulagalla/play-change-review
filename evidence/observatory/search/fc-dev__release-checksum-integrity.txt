@@ -1,0 +1,22 @@
+@@status
+ok: Found 1 play(s) for: release-checksum-integrity
+
+@@result
+query: release-checksum-integrity
+total_results: 1
+limit: 50
+include_drafts: false
+
+@@next
+- rote registry play pull <org>/<name>
+
+@@plays
+Search results for: release-checksum-integrity
+
+1. release-checksum-integrity (88% match)
+   Deterministically compares GitHub release assets with checksum manifests and verifies accessible asset bytes.
+   version: 0.0.2
+   namespace: fc-dev
+   status: approved
+   quality: 0.88
+

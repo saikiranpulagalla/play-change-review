@@ -1,0 +1,22 @@
+@@status
+ok: Found 1 play(s) for: show-hn-timing
+
+@@result
+query: show-hn-timing
+total_results: 1
+limit: 50
+include_drafts: false
+
+@@next
+- rote registry play pull <org>/<name>
+
+@@plays
+Search results for: show-hn-timing
+
+1. show-hn-timing (100% match)
+   Answers "when should I post my Show HN" from the posts themselves instead of folklore. Reads the live Show HN listing through the Hacker News adapter, fans out to fetch each submission individually, and reduces them locally into score and comment distributions by hour of day and day of week in a timezone you choose, plus the title characteristics that co-occur with a higher median. It reports the median and the p90, never the mean, because a handful of front-page outliers drag a mean far above anything a typical post gets, and it leads with the base rate - the share of sampled posts that scored under a threshold - because that is the honest denominator most launch advice hides. Every number carries the sample size it came from, and an hour with too few posts is printed as too few posts rather than as a median over three. It reports correlation and refuses to phrase it as a recipe: these are the posts the listing shows right now, ranked by the site's own algorithm, not a random sample of everything ever submitted. If the fetch comes back incomplete - the API unreachable, rate-limited, or returning a partial set - the whole report is withheld and the play prints UNKNOWN, because the items that failed are not a random subset of the items that succeeded and a confident chart over the survivors is worse than no chart. Needs no account, no credential and no key. Read-only: it reads public listings and posts, and writes nothing.
+   version: 1.0.0
+   namespace: lgoyal6
+   status: approved
+   quality: 1.00
+

@@ -1,0 +1,29 @@
+@@status
+ok: Found 2 play(s) for: dependency-confusion
+
+@@result
+query: dependency-confusion
+total_results: 2
+limit: 50
+include_drafts: false
+
+@@next
+- rote registry play pull <org>/<name>
+
+@@plays
+Search results for: dependency-confusion
+
+1. dependency-confusion (100% match)
+   Answers one question about a repository: which internal-looking dependencies could be hijacked by a public package of the same name. The bug is that an internal package name nobody claimed on the public registry can be registered by anyone, and the next install may pull theirs instead of yours. Four things are looked for: a dependency whose name looks internal (an npm scope this repository publishes under, a distribution prefix that matches how it names itself, a Go module on a host that is not a public forge, or a lockfile entry that does not resolve to the public registry); a private-registry configuration that does not pin the scope, meaning an .npmrc with a bare registry= line and no @scope:registry mapping, or a pip --extra-index-url, which ADDS an index rather than replacing one so pip queries both and installs the higher version; a lockfile entry for an internal-looking name that resolves from the public registry while the tree's own configuration expects a private source, meaning the public copy already won; and a go.mod requiring a module on a private host with no GOPRIVATE or GONOPROXY covering it. Findings rank by exploitability: an additive pip index beside an internal name is critical, an unpinned scope in an .npmrc is high, an internal name with no registry configuration at all is high, and a name that merely looks internal but resolves privately everywhere is informational. Telling a genuinely internal name from a public package that merely sounds internal is the hard part and the whole value, so it is answered structurally rather than by vocabulary: identity comes from what the repository publishes itself under, and a lockfile entry resolving from the public registry is treated as EXCULPATORY unless the tree also configured a private source for that name. Every critical and high candidate is then re-opened by a separate verify stage that walks the whole repository - for a workspace member declaring the name, for a scope mapping the per-manifest walk never reached, for a GOPRIVATE in a file the analyzer does not read - and emits CONFIRMED, WITHDRAWN or UNCERTAIN quoting what it read. Covers npm, yarn, pnpm, pip, poetry, uv, Pipenv, Go modules and Cargo. Read-only, offline, no network call, no credential ever copied.
+   version: 0.2.0
+   namespace: lgoyal6
+   status: approved
+   quality: 1.00
+
+2. dependency-confusion (100% match)
+   Answers one question about a repository: which internal-looking dependencies could be hijacked by a public package of the same name. The bug is that an internal package name nobody claimed on the public registry can be registered by anyone, and the next install may pull theirs instead of yours. Four things are looked for: a dependency whose name looks internal (an npm scope this repository publishes under, a distribution prefix that matches how it names itself, a Go module on a host that is not a public forge, or a lockfile entry that does not resolve to the public registry); a private-registry configuration that does not pin the scope, meaning an .npmrc with a bare registry= line and no @scope:registry mapping, or a pip --extra-index-url, which ADDS an index rather than replacing one so pip queries both and installs the higher version; a lockfile entry for an internal-looking name that resolves from the public registry while the tree's own configuration expects a private source, meaning the public copy already won; and a go.mod requiring a module on a private host with no GOPRIVATE or GONOPROXY covering it. Findings rank by exploitability: an additive pip index beside an internal name is critical, an unpinned scope in an .npmrc is high, an internal name with no registry configuration at all is high, and a name that merely looks internal but resolves privately everywhere is informational. Telling a genuinely internal name from a public package that merely sounds internal is the hard part and the whole value, so it is answered structurally rather than by vocabulary: identity comes from what the repository publishes itself under, and a lockfile entry resolving from the public registry is treated as EXCULPATORY unless the tree also configured a private source for that name. Every critical and high candidate is then re-opened by a separate verify stage that walks the whole repository - for a workspace member declaring the name, for a scope mapping the per-manifest walk never reached, for a GOPRIVATE in a file the analyzer does not read - and emits CONFIRMED, WITHDRAWN or UNCERTAIN quoting what it read. Covers npm, yarn, pnpm, pip, poetry, uv, Pipenv, Go modules and Cargo. Read-only, offline, no network call, no credential ever copied.
+   version: 0.1.0
+   namespace: lgoyal6
+   status: approved
+   quality: 1.00
+

@@ -1,0 +1,50 @@
+@@status
+ok: Found 5 play(s) for: dev-storage-reclaimer
+
+@@result
+query: dev-storage-reclaimer
+total_results: 5
+limit: 50
+include_drafts: false
+
+@@next
+- rote registry play pull <org>/<name>
+
+@@plays
+Search results for: dev-storage-reclaimer
+
+1. dev-storage-reclaimer (52% match)
+   Audits dormant local developer projects and ranks reclaimable dependency and cache space.
+   version: 0.4.0
+   namespace: anvit
+   status: approved
+   quality: 0.52
+
+2. dev-storage-reclaimer (52% match)
+   Audits dormant local developer projects and ranks reclaimable dependency and cache space.
+   version: 0.3.0
+   namespace: anvit
+   status: approved
+   quality: 0.52
+
+3. dev-storage-reclaimer (52% match)
+   Audits dormant local developer projects and ranks reclaimable dependency and cache space.
+   version: 0.2.1
+   namespace: anvit
+   status: approved
+   quality: 0.52
+
+4. dev-storage-reclaimer (52% match)
+   Audits dormant local developer projects and ranks reclaimable dependency and cache space.
+   version: 0.2.0
+   namespace: anvit
+   status: approved
+   quality: 0.52
+
+5. dev-storage-reclaimer (52% match)
+   Audits dormant local developer projects and ranks reclaimable dependency and cache space.
+   version: 0.0.1
+   namespace: anvit
+   status: approved
+   quality: 0.52
+

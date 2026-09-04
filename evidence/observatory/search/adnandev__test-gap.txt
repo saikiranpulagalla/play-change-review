@@ -1,0 +1,36 @@
+@@status
+ok: Found 3 play(s) for: test-gap
+
+@@result
+query: test-gap
+total_results: 3
+limit: 50
+include_drafts: false
+
+@@next
+- rote registry play pull <org>/<name>
+
+@@plays
+Search results for: test-gap
+
+1. test-gap (100% match)
+   Finds every git repository on this machine and ranks them by how much code ships with no tests at all. On the machine this was built on, two of three repositories contained no test file of any kind, and source outweighed tests fourteen lines to one across 15,531 lines. Three DAG steps: one reader that discovers repositories and their last commit, one that classifies every source file as production or test, and one join that ranks repos by exposure and names the directories with no sibling tests. Classification is deliberately generous, so a gap is understated rather than invented, and finding no repositories prints INDETERMINATE instead of a confident zero. It measures whether tests exist, never whether they pass. Read-only toward your code: it runs no test, changes no file you already have, makes no network call, carries no credentials, and needs only python3 and git. The one thing it writes is its own test-gap.json report, inside the run workspace.
+   version: 0.1.2
+   namespace: adnandev
+   status: approved
+   quality: 1.00
+
+2. test-gap (100% match)
+   Finds every git repository on this machine and ranks them by how much code ships with no tests at all. On the machine this was built on, two of three repositories contained no test file of any kind, and source outweighed tests fourteen lines to one across 15,531 lines. Three DAG steps: one reader that discovers repositories and their last commit, one that classifies every source file as production or test, and one join that ranks repos by exposure and names the directories with no sibling tests. Classification is deliberately generous, so a gap is understated rather than invented, and finding no repositories prints INDETERMINATE instead of a confident zero. It measures whether tests exist, never whether they pass. Read-only: it runs no test, edits nothing, makes no network call, carries no credentials, and needs only python3 and git.
+   version: 0.1.1
+   namespace: adnandev
+   status: approved
+   quality: 1.00
+
+3. test-gap (100% match)
+   Finds every git repository on this machine and ranks them by how much code ships with no tests at all. On the machine this was built on, two of three repositories contained no test file of any kind, and source outweighed tests fourteen lines to one across 15,531 lines. Three DAG steps: one reader that discovers repositories and their last commit, one that classifies every source file as production or test, and one join that ranks repos by exposure and names the directories with no sibling tests. Classification is deliberately generous, so a gap is understated rather than invented, and finding no repositories prints INDETERMINATE instead of a confident zero. It measures whether tests exist, never whether they pass. Read-only: it runs no test, edits nothing, makes no network call, carries no credentials, and needs only python3 and git.
+   version: 0.1.0
+   namespace: adnandev
+   status: approved
+   quality: 1.00
+

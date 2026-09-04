@@ -1,0 +1,57 @@
+@@status
+ok: Found 6 play(s) for: quiet-check
+
+@@result
+query: quiet-check
+total_results: 6
+limit: 50
+include_drafts: false
+
+@@next
+- rote registry play pull <org>/<name>
+
+@@plays
+Search results for: quiet-check
+
+1. quiet-check (100% match)
+   Find the places a Play goes quiet when something fails, so a failure never reads as a clean result. A check that returns nothing looks exactly like a check that found nothing, and that is how a broken step ships. This reads a Play package and reports six shapes that hide a failure. A guard that tests a tool is present and then runs it with flags another implementation rejects, so the fallback never fires. A shell body that needs bash 4 under the bash 3.2 macOS has shipped since 2007, where an associative array is the one that does not announce itself, because the option is rejected, every key subscripts to 0, and the last write wins. Stderr discarded inside a substitution with no fallback, so an error arrives as an empty string. A traversal that can partially fail without saying so. A broad except that only passes. And a guarded block with no else, which emits nothing when the tool is absent. It never imports, executes or pulls what it reads, it writes nothing, and it runs no subprocess at all. It names what it could not read, and it says so when nothing matched. It runs its own positive and negative cases before the scan and refuses to call the scan trustworthy if any of them fail.
+   version: 0.1.5
+   namespace: sookra
+   status: approved
+   quality: 1.00
+
+2. quiet-check (100% match)
+   Find the places a Play goes quiet when something fails, so a failure never reads as a clean result. A check that returns nothing looks exactly like a check that found nothing, and that is how a broken step ships. This reads a Play package and reports six shapes that hide a failure. A guard that tests a tool is present and then runs it with flags another implementation rejects, so the fallback never fires. A shell body that needs bash 4 under the bash 3.2 macOS has shipped since 2007, where an associative array is the one that does not announce itself, because the option is rejected, every key subscripts to 0, and the last write wins. Stderr discarded inside a substitution with no fallback, so an error arrives as an empty string. A traversal that can partially fail without saying so. A broad except that only passes. And a guarded block with no else, which emits nothing when the tool is absent. It never imports, executes or pulls what it reads, it writes nothing, and it runs no subprocess at all. It names what it could not read, and it says so when nothing matched. It runs its own positive and negative cases before the scan and refuses to call the scan trustworthy if any of them fail.
+   version: 0.1.4
+   namespace: sookra
+   status: approved
+   quality: 1.00
+
+3. quiet-check (100% match)
+   Find the places a Play goes quiet when something fails, so a failure never reads as a clean result. A check that returns nothing looks exactly like a check that found nothing, and that is how a broken step ships. This reads a Play package and reports five shapes that hide a failure. A guard that tests a tool is present and then runs it with flags another implementation rejects, so the fallback never fires. Stderr discarded inside a substitution with no fallback, so an error arrives as an empty string. A traversal that can partially fail without saying so. A broad except that only passes. And a guarded block with no else, which emits nothing when the tool is absent. It never imports, executes or pulls what it reads, it writes nothing, and it runs no subprocess at all. It names what it could not read, and it says so when nothing matched. It runs its own positive and negative cases before the scan and refuses to call the scan trustworthy if any of them fail.
+   version: 0.1.3
+   namespace: sookra
+   status: approved
+   quality: 1.00
+
+4. quiet-check (100% match)
+   Find the places a Play goes quiet when something fails, so a failure never reads as a clean result. A check that returns nothing looks exactly like a check that found nothing, and that is how a broken step ships. This reads a Play package and reports five shapes that hide a failure. A guard that tests a tool is present and then runs it with flags another implementation rejects, so the fallback never fires. Stderr discarded inside a substitution with no fallback, so an error arrives as an empty string. A traversal that can partially fail without saying so. A broad except that only passes. And a guarded block with no else, which emits nothing when the tool is absent. It never imports, executes or pulls what it reads, it writes nothing, and it runs no subprocess at all. It names what it could not read, and it says so when nothing matched. It runs its own positive and negative cases before the scan and refuses to call the scan trustworthy if any of them fail.
+   version: 0.1.2
+   namespace: sookra
+   status: approved
+   quality: 1.00
+
+5. quiet-check (100% match)
+   Find the places a Play goes quiet when something fails, so a failure never reads as a clean result. A check that returns nothing looks exactly like a check that found nothing, and that is how a broken step ships. This reads a Play package and reports five shapes that hide a failure. A guard that tests a tool is present and then runs it with flags another implementation rejects, so the fallback never fires. Stderr discarded inside a substitution with no fallback, so an error arrives as an empty string. A traversal that can partially fail without saying so. A broad except that only passes. And a guarded block with no else, which emits nothing when the tool is absent. It never imports, executes or pulls what it reads, it writes nothing, and it runs no subprocess at all. It names what it could not read, and it says so when nothing matched.
+   version: 0.1.1
+   namespace: sookra
+   status: approved
+   quality: 1.00
+
+6. quiet-check (100% match)
+   Find the places a Play goes quiet when something fails, so a failure never reads as a clean result. A check that returns nothing looks exactly like a check that found nothing, and that is how a broken step ships. This reads a Play package and reports five shapes that hide a failure. A guard that tests a tool is present and then runs it with flags another implementation rejects, so the fallback never fires. Stderr discarded inside a substitution with no fallback, so an error arrives as an empty string. A traversal that can partially fail without saying so. A broad except that only passes. And a guarded block with no else, which emits nothing when the tool is absent. It never imports, executes or pulls what it reads, it writes nothing, and it runs no subprocess at all. It names what it could not read, and it says so when nothing matched.
+   version: 0.1.0
+   namespace: sookra
+   status: approved
+   quality: 1.00
+

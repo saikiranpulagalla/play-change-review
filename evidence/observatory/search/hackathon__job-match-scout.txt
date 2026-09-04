@@ -1,0 +1,22 @@
+@@status
+ok: Found 1 play(s) for: job-match-scout
+
+@@result
+query: job-match-scout
+total_results: 1
+limit: 50
+include_drafts: false
+
+@@next
+- rote registry play pull <org>/<name>
+
+@@plays
+Search results for: job-match-scout
+
+1. job-match-scout (88% match)
+   Mojito: Find jobs. Skip the wrong ones. Teach it your taste. Evaluates live remote jobs against candidate profile and learns from user corrections.
+   version: 0.1.0
+   namespace: hackathon
+   status: approved
+   quality: 0.88
+

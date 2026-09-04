@@ -1,0 +1,24 @@
+play	snapshot_candidate	eligibility	reason	discovered_stable_versions
+saikiran-labs/play-change-review	0.1.1	ELIGIBLE		0.1.0,0.1.1
+amaan-playoffs/git-handoff-snapshot	0.2.2	ELIGIBLE		0.1.0,0.2.0,0.2.1,0.2.2
+anvit/dev-storage-reclaimer	0.4.0	ELIGIBLE		0.0.1,0.2.0,0.2.1,0.3.0,0.4.0
+sookra/quiet-check	0.1.5	ELIGIBLE		0.1.0,0.1.1,0.1.2,0.1.3,0.1.4,0.1.5
+lgoyal6/shutdown-safety	0.3.0	ELIGIBLE		0.1.0,0.2.0,0.3.0
+lgoyal6/query-in-loop	1.2.0	ELIGIBLE		1.0.0,1.1.0,1.2.0
+lgoyal6/cache-key-scope	1.1.0	ELIGIBLE		1.0.0,1.1.0
+lgoyal6/overfetch-response	0.3.0	ELIGIBLE		0.1.0,0.2.0,0.3.0
+lgoyal6/show-hn-timing	1.0.0	INELIGIBLE	only one stable approved release	1.0.0
+lgoyal6/dependency-confusion	0.2.0	ELIGIBLE		0.1.0,0.2.0
+lgoyal6/unclosed-resources	1.3.0	ELIGIBLE		1.0.0,1.1.0,1.2.0,1.3.0
+lgoyal6/copyleft-reach	0.2.0	ELIGIBLE		0.1.0,0.2.0
+lgoyal6/llm-spend-guard	0.2.0	ELIGIBLE		0.1.0,0.2.0
+lgoyal6/shipped-page-audit	0.1.0	INELIGIBLE	only one stable approved release	0.1.0
+lgoyal6/prompt-injection-surface	1.1.0	ELIGIBLE		1.0.0,1.1.0
+lgoyal6/automation-reality	0.1.0	INELIGIBLE	only one stable approved release	0.1.0
+lgoyal6/runtime-drift	0.1.0	INELIGIBLE	only one stable approved release	0.1.0
+satianurag/ci-digest-guard	0.4.0	ELIGIBLE		0.1.0,0.2.0,0.3.0,0.4.0
+fc-dev/release-checksum-integrity	0.0.2	INELIGIBLE	only one stable approved release	0.0.2
+adnandev/test-gap	0.1.2	ELIGIBLE		0.1.0,0.1.1,0.1.2
+psohi-labs/polygraph	0.0.11	ELIGIBLE		0.0.1,0.0.2,0.0.3,0.0.4,0.0.5,0.0.6,0.0.7,0.0.8,0.0.9,0.0.10,0.0.11
+ankurrawat/100-million-request-scaling	2.0.1	ELIGIBLE		1.0.0,1.1.0,2.0.0,2.0.1
+hackathon/job-match-scout	0.1.0	INELIGIBLE	only one stable approved release	0.1.0

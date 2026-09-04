@@ -1,0 +1,29 @@
+@@status
+ok: Found 2 play(s) for: cache-key-scope
+
+@@result
+query: cache-key-scope
+total_results: 2
+limit: 50
+include_drafts: false
+
+@@next
+- rote registry play pull <org>/<name>
+
+@@plays
+Search results for: cache-key-scope
+
+1. cache-key-scope (100% match)
+   Answers one question about a codebase: where does it cache a value under a key that does not include everything the value varies by. A key that omits something the value depends on serves one caller's data to another, and it is invisible in testing because you need two different callers to see it. Five shapes are found and ranked by who can see what. Critical, because they cross a trust boundary: a cache write whose value derives from a user, tenant, account, org or session identifier where that identifier is absent from the key; and a response marked Cache-Control public or s-maxage, or a Django cache_page, from a handler that reads an Authorization header, a cookie or a user parameter, with no Vary on it, which leaks through a shared cache rather than in-process. High: a key built from a subset of the parameters that actually influence the value, and a memoisation decorator - lru_cache, cache, cached, memoize, unstable_cache, Cacheable, or a module-level dict - on a function whose result depends on request state, a module global or mutable self state rather than only on its arguments. Medium: a key that omits a locale, currency, timezone, feature flag or A/B variant, which is wrong output rather than somebody else's data. Telling "the value depends on the caller" apart from "the function merely takes a user argument it does not use in the result" is the hard part and the whole value, so dependence is established by a def-use walk from the value expression back through the assignments of the enclosing function, every hop is printed as evidence, and a hit with no strong evidence goes to its own low-confidence bucket. Seven correct patterns are recognised, counted and never reported: a value that genuinely does not vary by caller, a key that already carries the identifier through a variable or a namespace, a per-user or per-tenant cache instance, a request-scoped cache that cannot outlive the request, a memoised pure function, a shared-cacheable response that does carry Vary, and a cache primitive whose key is an opaque parameter its callers composed. A narrow key whose omitted dimension is re-checked on every hit is demoted and told to say so. Comments and string bodies are separated by a language-aware lexer, so a commented-out cache write stays a comment and the word user inside a key literal never counts as the identity being present. JavaScript, TypeScript, Python, Go, Ruby, Java and Kotlin. Read-only, offline, no credentials.
+   version: 1.1.0
+   namespace: lgoyal6
+   status: approved
+   quality: 1.00
+
+2. cache-key-scope (100% match)
+   Answers one question about a codebase: where does it cache a value under a key that does not include everything the value varies by. A key that omits something the value depends on serves one caller's data to another, and it is invisible in testing because you need two different callers to see it. Five shapes are found and ranked by who can see what. Critical, because they cross a trust boundary: a cache write whose value derives from a user, tenant, account, org or session identifier where that identifier is absent from the key; and a response marked Cache-Control public or s-maxage, or a Django cache_page, from a handler that reads an Authorization header, a cookie or a user parameter, with no Vary on it, which leaks through a shared cache rather than in-process. High: a key built from a subset of the parameters that actually influence the value, and a memoisation decorator - lru_cache, cache, cached, memoize, unstable_cache, Cacheable, or a module-level dict - on a function whose result depends on request state, a module global or mutable self state rather than only on its arguments. Medium: a key that omits a locale, currency, timezone, feature flag or A/B variant, which is wrong output rather than somebody else's data. Telling "the value depends on the caller" apart from "the function merely takes a user argument it does not use in the result" is the hard part and the whole value, so dependence is established by a def-use walk from the value expression back through the assignments of the enclosing function, every hop is printed as evidence, and a hit with no strong evidence goes to its own low-confidence bucket. Seven correct patterns are recognised, counted and never reported: a value that genuinely does not vary by caller, a key that already carries the identifier through a variable or a namespace, a per-user or per-tenant cache instance, a request-scoped cache that cannot outlive the request, a memoised pure function, a shared-cacheable response that does carry Vary, and a cache primitive whose key is an opaque parameter its callers composed. A narrow key whose omitted dimension is re-checked on every hit is demoted and told to say so. Comments and string bodies are separated by a language-aware lexer, so a commented-out cache write stays a comment and the word user inside a key literal never counts as the identity being present. JavaScript, TypeScript, Python, Go, Ruby, Java and Kotlin. Read-only, offline, no credentials.
+   version: 1.0.0
+   namespace: lgoyal6
+   status: approved
+   quality: 1.00
+

@@ -1,0 +1,36 @@
+@@status
+ok: Found 3 play(s) for: shutdown-safety
+
+@@result
+query: shutdown-safety
+total_results: 3
+limit: 50
+include_drafts: false
+
+@@next
+- rote registry play pull <org>/<name>
+
+@@plays
+Search results for: shutdown-safety
+
+1. shutdown-safety (100% match)
+   Answers one question about a codebase: will this service lose work when the orchestrator stops it? Every rolling deploy sends SIGTERM, and a process that ignores it keeps running until SIGKILL arrives, so whatever was in flight at that moment is gone - the half-written HTTP responses, the queue message that was already deleted, the row that was half inserted - and it looks completely healthy in every test. Finds a long-running server or worker with no signal handler at all, which is the base case and the most common; a handler that calls os._exit, sys.exit, process.exit or os.Exit instead of draining, which is worse than none because it makes the problem look solved; an HTTP server started with no shutdown path anywhere in its file or package, including http.ListenAndServe and Flask app.run which expose no shutdown API at all; a consumer loop over a queue, Kafka, SQS or Redis BLPOP whose only exit is a kill; a Dockerfile whose CMD or ENTRYPOINT is shell form, so PID 1 is sh and the signal never reaches the process at all; and a terminationGracePeriodSeconds shorter than the container's own preStop sleep or its code's own drain deadline. Work acknowledged before it is done - an ack, delete or commit-offset ahead of the handler - is reported separately, because that is a correctness bug rather than a shutdown bug. The hard part is telling a long-running service from a script, since exiting immediately on SIGTERM is exactly right for a CLI and draining is meaningless there, so every file reports the positive evidence that it is a service and the negative evidence that it is a script, and every exclusion is named: a one-shot script, a test harness, a supervisor documented by STOPSIGNAL to send SIGINT, and a server whose shutdown is owned by a framework, with the framework named and its mechanism stated. Comments and string bodies are blanked by a language-aware lexer, so a commented-out loop is prose. Covers Python, Go and JavaScript/TypeScript, Dockerfiles and Kubernetes workloads. Read-only, offline, no credentials.
+   version: 0.3.0
+   namespace: lgoyal6
+   status: approved
+   quality: 1.00
+
+2. shutdown-safety (100% match)
+   Answers one question about a codebase: will this service lose work when the orchestrator stops it? Every rolling deploy sends SIGTERM, and a process that ignores it keeps running until SIGKILL arrives, so whatever was in flight at that moment is gone - the half-written HTTP responses, the queue message that was already deleted, the row that was half inserted - and it looks completely healthy in every test. Finds a long-running server or worker with no signal handler at all, which is the base case and the most common; a handler that calls os._exit, sys.exit, process.exit or os.Exit instead of draining, which is worse than none because it makes the problem look solved; an HTTP server started with no shutdown path anywhere in its file or package, including http.ListenAndServe and Flask app.run which expose no shutdown API at all; a consumer loop over a queue, Kafka, SQS or Redis BLPOP whose only exit is a kill; a Dockerfile whose CMD or ENTRYPOINT is shell form, so PID 1 is sh and the signal never reaches the process at all; and a terminationGracePeriodSeconds shorter than the container's own preStop sleep or its code's own drain deadline. Work acknowledged before it is done - an ack, delete or commit-offset ahead of the handler - is reported separately, because that is a correctness bug rather than a shutdown bug. The hard part is telling a long-running service from a script, since exiting immediately on SIGTERM is exactly right for a CLI and draining is meaningless there, so every file reports the positive evidence that it is a service and the negative evidence that it is a script, and every exclusion is named: a one-shot script, a test harness, a supervisor documented by STOPSIGNAL to send SIGINT, and a server whose shutdown is owned by a framework, with the framework named and its mechanism stated. Comments and string bodies are blanked by a language-aware lexer, so a commented-out loop is prose. Covers Python, Go and JavaScript/TypeScript, Dockerfiles and Kubernetes workloads. Read-only, offline, no credentials.
+   version: 0.2.0
+   namespace: lgoyal6
+   status: approved
+   quality: 1.00
+
+3. shutdown-safety (100% match)
+   Answers one question about a codebase: will this service lose work when the orchestrator stops it? Every rolling deploy sends SIGTERM, and a process that ignores it keeps running until SIGKILL arrives, so whatever was in flight at that moment is gone - the half-written HTTP responses, the queue message that was already deleted, the row that was half inserted - and it looks completely healthy in every test. Finds a long-running server or worker with no signal handler at all, which is the base case and the most common; a handler that calls os._exit, sys.exit, process.exit or os.Exit instead of draining, which is worse than none because it makes the problem look solved; an HTTP server started with no shutdown path anywhere in its file or package, including http.ListenAndServe and Flask app.run which expose no shutdown API at all; a consumer loop over a queue, Kafka, SQS or Redis BLPOP whose only exit is a kill; a Dockerfile whose CMD or ENTRYPOINT is shell form, so PID 1 is sh and the signal never reaches the process at all; and a terminationGracePeriodSeconds shorter than the container's own preStop sleep or its code's own drain deadline. Work acknowledged before it is done - an ack, delete or commit-offset ahead of the handler - is reported separately, because that is a correctness bug rather than a shutdown bug. The hard part is telling a long-running service from a script, since exiting immediately on SIGTERM is exactly right for a CLI and draining is meaningless there, so every file reports the positive evidence that it is a service and the negative evidence that it is a script, and every exclusion is named: a one-shot script, a test harness, a supervisor documented by STOPSIGNAL to send SIGINT, and a server whose shutdown is owned by a framework, with the framework named and its mechanism stated. Comments and string bodies are blanked by a language-aware lexer, so a commented-out loop is prose. Covers Python, Go and JavaScript/TypeScript, Dockerfiles and Kubernetes workloads. Read-only, offline, no credentials.
+   version: 0.1.0
+   namespace: lgoyal6
+   status: approved
+   quality: 1.00
+

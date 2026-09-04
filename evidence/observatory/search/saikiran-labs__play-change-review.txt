@@ -1,0 +1,29 @@
+@@status
+ok: Found 2 play(s) for: play-change-review
+
+@@result
+query: play-change-review
+total_results: 2
+limit: 50
+include_drafts: false
+
+@@next
+- rote registry play pull <org>/<name>
+
+@@plays
+Search results for: play-change-review
+
+1. play-change-review (100% match)
+   You trusted one Play version. What changed in the next one? Compares two immutable releases of the same Play across inputs, declared access, runtime requirements, registry-visible execution structure and artifact identity without executing either reviewed Play.
+   version: 0.1.1
+   namespace: saikiran-labs
+   status: approved
+   quality: 1.00
+
+2. play-change-review (100% match)
+   You trusted one Play version. What changed in the next one? Compares two immutable releases of the same Play across inputs, declared access, runtime requirements, execution structure and artifact identity without executing either reviewed Play.
+   version: 0.1.0
+   namespace: saikiran-labs
+   status: approved
+   quality: 1.00
+

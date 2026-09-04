@@ -1,0 +1,29 @@
+@@status
+ok: Found 2 play(s) for: copyleft-reach
+
+@@result
+query: copyleft-reach
+total_results: 2
+limit: 50
+include_drafts: false
+
+@@next
+- rote registry play pull <org>/<name>
+
+@@plays
+Search results for: copyleft-reach
+
+1. copyleft-reach (100% match)
+   Answers the question an inventory cannot: does a copyleft obligation actually REACH the code you ship? Where license-guard inventories which licences are present in a dependency tree, this ranks each strong-copyleft (GPL, AGPL, SSPL) and weak-copyleft (LGPL, MPL, EPL, CDDL) dependency by whether what ships can actually reach it, so a GPL devDependency is never reported as a violation. Four kinds of evidence are gathered, strongest first: which manifest section declares it (npm `dependencies` versus `devDependencies` and `optionalDependencies`, pip `[project.optional-dependencies]` and requirements-dev files, Cargo `[dev-dependencies]` and `[build-dependencies]`, Go require lines); whether the shipped entry point transitively imports it, starting from `main`, `bin`, `module` and `exports`, from Next.js route and page files, from `[project.scripts]`, from `src/main.rs` and `src/lib.rs`, or from the Go `main` package, and following the import graph as far as static reading allows; whether the only importers are tests, build scripts or config; and whether its name appears inside a build output that is committed or in a `files` allowlist. Ranking follows the obligation, not the licence: strong copyleft reachable from a shipped entry point is critical, strong copyleft that only a dev section declares is informational and is never called a violation, weak copyleft reachable is medium with the note that the obligation attaches to the file rather than to the product, and an unresolved licence on a reachable dependency is its own high finding, because you cannot comply with a licence you cannot read. A dual-licensed package whose permissive branch can be taken is not a finding at all. Every critical and high candidate is then re-opened by a separate verify stage that re-reads the specific manifest line and the specific import establishing reach, re-derives the manifest section structurally and re-lexes the source file with full string and block-comment awareness, and emits CONFIRMED, WITHDRAWN or UNCERTAIN quoting what it read; withdrawn candidates are printed in their own section rather than silently dropped. Reads only what the package manager already put on disk. No registry call, no network, no credentials.
+   version: 0.2.0
+   namespace: lgoyal6
+   status: approved
+   quality: 1.00
+
+2. copyleft-reach (100% match)
+   Answers the question an inventory cannot: does a copyleft obligation actually REACH the code you ship? Where license-guard inventories which licences are present in a dependency tree, this ranks each strong-copyleft (GPL, AGPL, SSPL) and weak-copyleft (LGPL, MPL, EPL, CDDL) dependency by whether what ships can actually reach it, so a GPL devDependency is never reported as a violation. Four kinds of evidence are gathered, strongest first: which manifest section declares it (npm `dependencies` versus `devDependencies` and `optionalDependencies`, pip `[project.optional-dependencies]` and requirements-dev files, Cargo `[dev-dependencies]` and `[build-dependencies]`, Go require lines); whether the shipped entry point transitively imports it, starting from `main`, `bin`, `module` and `exports`, from Next.js route and page files, from `[project.scripts]`, from `src/main.rs` and `src/lib.rs`, or from the Go `main` package, and following the import graph as far as static reading allows; whether the only importers are tests, build scripts or config; and whether its name appears inside a build output that is committed or in a `files` allowlist. Ranking follows the obligation, not the licence: strong copyleft reachable from a shipped entry point is critical, strong copyleft that only a dev section declares is informational and is never called a violation, weak copyleft reachable is medium with the note that the obligation attaches to the file rather than to the product, and an unresolved licence on a reachable dependency is its own high finding, because you cannot comply with a licence you cannot read. A dual-licensed package whose permissive branch can be taken is not a finding at all. Every critical and high candidate is then re-opened by a separate verify stage that re-reads the specific manifest line and the specific import establishing reach, re-derives the manifest section structurally and re-lexes the source file with full string and block-comment awareness, and emits CONFIRMED, WITHDRAWN or UNCERTAIN quoting what it read; withdrawn candidates are printed in their own section rather than silently dropped. Reads only what the package manager already put on disk. No registry call, no network, no credentials.
+   version: 0.1.0
+   namespace: lgoyal6
+   status: approved
+   quality: 1.00
+

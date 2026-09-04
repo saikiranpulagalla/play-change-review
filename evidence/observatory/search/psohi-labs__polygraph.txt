@@ -1,0 +1,92 @@
+@@status
+ok: Found 11 play(s) for: polygraph
+
+@@result
+query: polygraph
+total_results: 11
+limit: 50
+include_drafts: false
+
+@@next
+- rote registry play pull <org>/<name>
+
+@@plays
+Search results for: polygraph
+
+1. polygraph (76% match)
+   Your agent says it fetched the data. This checks whether it did, scoring what it CLAIMED against what OSV, World Bank and USGS actually returned. On the run this was built from, a bluffing claim set failed 4 of 5 checks while still passing the one figure that happened to be true - it scores per claim, not per agent. Four checks: call reality, pagination exhaustion (claiming complete after 1 of 6 World Bank pages reaches 50 of 265 rows), citation retention, and error surfacing (a deliberately malformed query returns HTTP 400 - reported, or swallowed?). Five steps: four independent source reads in parallel, one join. A source that goes down degrades to a labeled unknown and the run still completes; an indeterminate check is never a pass. Read-only against every source: anonymous public reads, no credential, nothing written back. Its only local effect is writing polygraph.html into out_dir, creating that directory if it does not exist; out_dir defaults to the run workspace. Needs only python3 3.9 or newer.
+   version: 0.0.11
+   namespace: psohi-labs
+   status: approved
+   quality: 1.00
+
+2. polygraph (76% match)
+   Your agent says it fetched the data. This checks whether it did, scoring what it CLAIMED against what OSV, World Bank and USGS actually returned. On the run this was built from, a bluffing claim set failed 4 of 5 checks while still passing the one figure that happened to be true - it scores per claim, not per agent. Four checks: call reality, pagination exhaustion (claiming complete after 1 of 6 World Bank pages reaches 50 of 265 rows), citation retention, and error surfacing (a deliberately malformed query returns HTTP 400 - reported, or swallowed?). Five steps: four independent source reads in parallel, one join. A source that goes down degrades to a labeled unknown and the run still completes; an indeterminate check is never a pass. Read-only against every source: anonymous public reads, no credential, nothing written back. Its only local effect is writing polygraph.html into out_dir, creating that directory if it does not exist; out_dir defaults to the run workspace. Needs only python3 3.9 or newer.
+   version: 0.0.10
+   namespace: psohi-labs
+   status: approved
+   quality: 1.00
+
+3. polygraph (76% match)
+   Your agent says it fetched the data. This checks whether it did, scoring what it CLAIMED against what OSV, World Bank and USGS actually returned. On the run this was built from, a bluffing claim set failed 4 of 5 checks while still passing the one figure that happened to be true - it scores per claim, not per agent. Four checks: call reality, pagination exhaustion (claiming complete after 1 of 6 World Bank pages reaches 50 of 265 rows), citation retention, and error surfacing (a deliberately malformed query returns HTTP 400 - reported, or swallowed?). Five steps: four independent source reads in parallel, one join. A source that goes down degrades to a labeled unknown and the run still completes; an indeterminate check is never a pass. Read-only against every source: anonymous public reads, no credential, nothing written back. Its one local effect is polygraph.html written into out_dir, which defaults to the run workspace. Needs only python3 3.9 or newer.
+   version: 0.0.9
+   namespace: psohi-labs
+   status: approved
+   quality: 1.00
+
+4. polygraph (76% match)
+   Your agent says it fetched the data. This checks whether it did, scoring what it CLAIMED against what OSV, World Bank and USGS actually returned. On the run this was built from, a bluffing claim set failed 4 of 5 checks while still passing the one figure that happened to be true - it scores per claim, not per agent. Four checks: call reality, pagination exhaustion (claiming complete after 1 of 6 World Bank pages reaches 50 of 265 rows), citation retention, and error surfacing (a deliberately malformed query returns HTTP 400 - reported, or swallowed?). Five steps: four independent source reads in parallel, one join. A source that goes down degrades to a labeled unknown and the run still completes; an indeterminate check is never a pass. Read-only against every source: anonymous public reads, no credential, nothing written back. Its one local effect is polygraph.html written into out_dir, which defaults to the run workspace. Needs only python3 3.9 or newer.
+   version: 0.0.8
+   namespace: psohi-labs
+   status: approved
+   quality: 1.00
+
+5. polygraph (76% match)
+   Your agent says it fetched the data. This checks whether it did, scoring what it CLAIMED against what OSV, World Bank and USGS actually returned. On the run this was built from, a bluffing claim set failed 4 of 5 checks while still passing the one figure that happened to be true - it scores per claim, not per agent. Four checks: call reality, pagination exhaustion (claiming complete after 1 of 6 World Bank pages reaches 50 of 265 rows), citation retention, and error surfacing (a deliberately malformed query returns HTTP 400 - reported, or swallowed?). Five steps: four independent source reads in parallel, one join. A source that goes down degrades to a labeled unknown and the run still completes; an indeterminate check is never a pass. Read-only against every source: anonymous public reads, no credential, nothing written back. Its one local effect is polygraph.html written into out_dir, which defaults to the run workspace. Needs only python3 3.9 or newer.
+   version: 0.0.7
+   namespace: psohi-labs
+   status: approved
+   quality: 1.00
+
+6. polygraph (76% match)
+   Your agent says it fetched the data. This checks whether it did, scoring what it CLAIMED against what OSV, World Bank and USGS actually returned. On the run this was built from, a bluffing claim set failed 4 of 5 checks while still passing the one figure that happened to be true - it scores per claim, not per agent. Four checks: call reality, pagination exhaustion (claiming complete after 1 of 6 World Bank pages reaches 50 of 265 rows), citation retention, and error surfacing (a deliberately malformed query returns HTTP 400 - reported, or swallowed?). Five steps: four independent source reads in parallel, one join. A source that goes down degrades to a labeled unknown and the run still completes; an indeterminate check is never a pass. Read-only, anonymous public reads, no credential, needs only python3.
+   version: 0.0.6
+   namespace: psohi-labs
+   status: approved
+   quality: 1.00
+
+7. polygraph (76% match)
+   Your agent says it fetched the data. This checks whether it did, scoring what it CLAIMED against what OSV, World Bank and USGS actually returned. On the run this was built from, a bluffing claim set failed 4 of 5 checks while still passing the one figure that happened to be true - it scores per claim, not per agent. Four checks: call reality, pagination exhaustion (claiming complete after 1 of 6 World Bank pages reaches 50 of 265 rows), citation retention, and error surfacing (a deliberately malformed query returns HTTP 400 - reported, or swallowed?). Five steps: four independent source reads in parallel, one join. A source that goes down degrades to a labeled unknown and the run still completes; an indeterminate check is never a pass. Read-only, anonymous public reads, no credential, needs only python3.
+   version: 0.0.5
+   namespace: psohi-labs
+   status: approved
+   quality: 1.00
+
+8. polygraph (76% match)
+   Your agent says it fetched the data. This checks whether it did, scoring what it CLAIMED against what OSV, World Bank and USGS actually returned. On the run this was built from, a bluffing claim set failed 4 of 5 checks while still passing the one figure that happened to be true - it scores per claim, not per agent. Four checks: call reality, pagination exhaustion (claiming complete after 1 of 6 World Bank pages reaches 50 of 265 rows), citation retention, and error surfacing (a deliberately malformed query returns HTTP 400 - reported, or swallowed?). Five steps: four independent source reads in parallel, one join. A source that goes down degrades to a labeled unknown and the run still completes; an indeterminate check is never a pass. Read-only, anonymous public reads, no credential, needs only python3.
+   version: 0.0.4
+   namespace: psohi-labs
+   status: approved
+   quality: 1.00
+
+9. polygraph (76% match)
+   Your agent says it fetched the data. This checks whether it did, scoring what it CLAIMED against what OSV, World Bank and USGS actually returned. On the run this was built from, a bluffing claim set failed 4 of 5 checks while still passing the one figure that happened to be true - it scores per claim, not per agent. Four checks: call reality, pagination exhaustion (claiming complete after 1 of 6 World Bank pages reaches 50 of 265 rows), citation retention, and error surfacing (a deliberately malformed query returns HTTP 400 - reported, or swallowed?). Five steps: four independent source reads in parallel, one join. A source that goes down degrades to a labeled unknown and the run still completes; an indeterminate check is never a pass. Read-only, anonymous public reads, no credential, needs only python3.
+   version: 0.0.3
+   namespace: psohi-labs
+   status: approved
+   quality: 1.00
+
+10. polygraph (76% match)
+   Scores a harness's claimed answers against live ground truth from three no-auth public sources, and returns a classified verdict.
+   version: 0.0.2
+   namespace: psohi-labs
+   status: approved
+   quality: 1.00
+
+11. polygraph (68% match)
+   Scores a harness's claimed answers against live ground truth from three no-auth public sources, and returns a classified verdict.
+   version: 0.0.1
+   namespace: psohi-labs
+   status: approved
+   quality: 0.90
+

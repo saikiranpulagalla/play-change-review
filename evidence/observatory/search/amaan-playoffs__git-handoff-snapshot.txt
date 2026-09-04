@@ -1,0 +1,57 @@
+@@status
+ok: Found 6 play(s) for: git-handoff-snapshot
+
+@@result
+query: git-handoff-snapshot
+total_results: 6
+limit: 50
+include_drafts: false
+
+@@next
+- rote registry play pull <org>/<name>
+
+@@plays
+Search results for: git-handoff-snapshot
+
+1. git-handoff-snapshot (90% match)
+   Creates a compact Git handoff with branch, upstream ahead/behind, HEAD, changed paths, numstat diff statistics, stash count, and recent commit metadata without reading file contents or patch hunks.
+   version: 0.2.1
+   namespace: chetan
+   status: approved
+   quality: 0.90
+
+2. git-handoff-snapshot (90% match)
+   Creates a compact Git handoff with branch, upstream ahead/behind, HEAD, changed paths, numstat diff statistics, stash count, and recent commit metadata without reading file contents or patch hunks.
+   version: 0.2.0
+   namespace: chetan
+   status: approved
+   quality: 0.90
+
+3. git-handoff-snapshot (90% match)
+   Creates a compact Git handoff with branch, upstream ahead/behind, HEAD, changed paths, numstat diff statistics, stash count, and recent commit metadata without reading file contents or patch hunks.
+   version: 0.2.0
+   namespace: amaan-playoffs
+   status: approved
+   quality: 0.90
+
+4. git-handoff-snapshot (90% match)
+   Creates a compact Git handoff with branch state, changed paths, diff statistics, and recent commit metadata without reading file contents or patch hunks.
+   version: 0.1.0
+   namespace: amaan-playoffs
+   status: approved
+   quality: 0.90
+
+5. git-handoff-snapshot (88% match)
+   Creates a compact Git handoff with branch, last-fetched upstream state, changed paths, numeric diff totals, stash count, and recent commit metadata without outputting file contents or patch hunks.
+   version: 0.2.2
+   namespace: amaan-playoffs
+   status: approved
+   quality: 0.88
+
+6. git-handoff-snapshot (88% match)
+   Creates a compact Git handoff with branch, upstream ahead/behind, HEAD, changed paths, numstat diff statistics, stash count, and recent commit metadata without reading file contents or patch hunks.
+   version: 0.2.1
+   namespace: amaan-playoffs
+   status: approved
+   quality: 0.88
+

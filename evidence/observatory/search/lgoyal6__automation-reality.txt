@@ -1,0 +1,29 @@
+@@status
+ok: Found 2 play(s) for: automation-reality
+
+@@result
+query: automation-reality
+total_results: 2
+limit: 50
+include_drafts: false
+
+@@next
+- rote registry play pull <org>/<name>
+
+@@plays
+Search results for: automation-reality
+
+1. automation-reality (100% match)
+   A scheduled job that exits 0 is not a job that worked. Answers one question about THIS machine: for every recurring automation on it, is the work still actually happening, and did its output land? Reconciles the DECLARED schedule against OBSERVED reality across launchd (StartInterval and StartCalendarInterval in ~/Library/LaunchAgents, cross-checked against launchctl's own loaded state, run counter and last exit code), the user crontab, and GitHub Actions workflows carrying a schedule: trigger in the repositories on this disk. Observation comes from the jobs' own output: arrival times are recovered from the timestamps INSIDE each log, clustered so that fifty lines from one run count as one run, and the median gap between arrivals is compared against the declared interval. Ranks by consequence rather than by scheduler: an automation that has silently stopped is CRITICAL, because the person believes it is running; a scheduled workflow in a repository of yours with no commit for 60 days is HIGH, because GitHub disables those silently and tells nobody; a declared interval that disagrees with observed arrivals by a factor is HIGH, since it means the job is failing early and retrying, the machine slept through the window, or something other than that schedule is also starting it; a job with no output path at all is MEDIUM, because nobody can tell whether it worked - but only after looking for the job's OWN run store first, since a job that keeps a per-run ledger of its own (a sqlite table with a timestamp and an exit code, a JSONL run log, a stamp file whose mtime tracks runs) has no reason to ask launchd to capture its stdout, and grading it unobservable from the plist alone is this play's own thesis failing one level down. Candidate locations are derived from the job's own ProgramArguments rather than guessed globally, sqlite is opened through the mode=ro&immutable=1 URI so a live database is never locked and no -wal/-shm sidecar is ever created, only the timestamp and outcome columns are projected and never a row's payload, and a store that exists but cannot be read is its own honest class rather than either silence or a clean bill of health. A fourth stage re-opens every CRITICAL and HIGH candidate - the plist file, launchctl's live record, the log file, the workflow line - and returns CONFIRMED, WITHDRAWN or UNCERTAIN quoting what it read; the withdrawals matter as much as the confirmations, since a plist edited after the last run and a stale second clone of a repository you push to daily both look exactly like a dead automation until something checks. Excluded and counted, never reported: a job disabled on purpose and saying so, a RunAtLoad one-shot, a KeepAlive resident service, Apple's own agents, an output path of /dev/null, and a repository whose origin is not yours. READ-ONLY: launchctl list, launchctl print and git log are queries, and nothing is ever loaded, unloaded, edited, enabled, disabled or triggered. No credentials, no network, no API. Needs python3 and, for the launchd source, launchctl and plutil.
+   version: 0.2.0
+   namespace: lgoyal6
+   status: approved
+   quality: 1.00
+
+2. automation-reality (100% match)
+   A scheduled job that exits 0 is not a job that worked. Answers one question about THIS machine: for every recurring automation on it, is the work still actually happening, and did its output land? Reconciles the DECLARED schedule against OBSERVED reality across launchd (StartInterval and StartCalendarInterval in ~/Library/LaunchAgents, cross-checked against launchctl's own loaded state, run counter and last exit code), the user crontab, and GitHub Actions workflows carrying a schedule: trigger in the repositories on this disk. Observation comes from the jobs' own output: arrival times are recovered from the timestamps INSIDE each log, clustered so that fifty lines from one run count as one run, and the median gap between arrivals is compared against the declared interval. Ranks by consequence rather than by scheduler: an automation that has silently stopped is CRITICAL, because the person believes it is running; a scheduled workflow in a repository of yours with no commit for 60 days is HIGH, because GitHub disables those silently and tells nobody; a declared interval that disagrees with observed arrivals by a factor is HIGH, since it means the job is failing early and retrying, the machine slept through the window, or something other than that schedule is also starting it; a job with no output path at all is MEDIUM, because nobody can tell whether it worked. A fourth stage re-opens every CRITICAL and HIGH candidate - the plist file, launchctl's live record, the log file, the workflow line - and returns CONFIRMED, WITHDRAWN or UNCERTAIN quoting what it read; the withdrawals matter as much as the confirmations, since a plist edited after the last run and a stale second clone of a repository you push to daily both look exactly like a dead automation until something checks. Excluded and counted, never reported: a job disabled on purpose and saying so, a RunAtLoad one-shot, a KeepAlive resident service, Apple's own agents, an output path of /dev/null, and a repository whose origin is not yours. READ-ONLY: launchctl list, launchctl print and git log are queries, and nothing is ever loaded, unloaded, edited, enabled, disabled or triggered. No credentials, no network, no API. Needs python3 and, for the launchd source, launchctl and plutil.
+   version: 0.1.0
+   namespace: lgoyal6
+   status: approved
+   quality: 1.00
+

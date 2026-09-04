@@ -1,0 +1,22 @@
+@@status
+ok: Found 1 play(s) for: shipped-page-audit
+
+@@result
+query: shipped-page-audit
+total_results: 1
+limit: 50
+include_drafts: false
+
+@@next
+- rote registry play pull <org>/<name>
+
+@@plays
+Search results for: shipped-page-audit
+
+1. shipped-page-audit (100% match)
+   Answers one question about a page you have already deployed: what does it hand a visitor that it should not? Source code tells you what was written; only a real page load tells you what shipped, and the two differ for a dozen ordinary reasons - a build flag, a CDN, an edge rule, a header set on a proxy nobody reads. A real browser loads the URL, and the audit then reads what a visitor actually receives. Six things: the security response headers that are genuinely present, reporting what is missing AND what is present but permissive, because a Content-Security-Policy carrying unsafe-inline, unsafe-eval or a wildcard source reads as protection in a review and is not; the cookies set on the response, flagged for a missing Secure, a session-shaped name with no HttpOnly, SameSite=None, or a Domain widened to the whole registrable domain, with the cookie value never read and never printed; source maps reachable from production, which is the finding that matters most, because a sourceMappingURL whose target answers 200 hands over the original unminified source of that bundle, and this is the live counterpart to a build-output check that can only tell you what your own dist directory contains; mixed content, meaning any http:// subresource on an https:// page; credential-shaped literals in what the browser received, in an inline script or a fetched bundle, reported as a file, a shape and a count and NEVER as a value, not even truncated; and the third-party origins the page contacts, listed plainly, because each one is a party that sees your visitors. Grading follows what a visitor or an attacker actually gains: a resolvable source map or a server-only credential shape in a bundle is critical, a missing HSTS or a permissive CSP is high, a missing X-Content-Type-Options is medium, and a third-party origin is context rather than a finding. The browser is load-bearing rather than decorative: it resolves the URL a visitor really lands on, including a JavaScript or meta-refresh redirect no fetch follows, so the audit reads the page that shipped instead of the URL you typed, and it reports a redirect that crossed to a different registrable domain instead of silently auditing somebody else. Read-only, and strictly so: one page load, GET requests only, no crawling, no form ever submitted, nothing clicked, no login, no cookie banner accepted, no cookie sent back and no credential of any kind transmitted. If the page does not load, times out, or answers anything but 2xx, the report is UNKNOWN and no verdict is given, because a clean report over a page that never loaded is the worst output this could produce.
+   version: 0.1.0
+   namespace: lgoyal6
+   status: approved
+   quality: 1.00
+

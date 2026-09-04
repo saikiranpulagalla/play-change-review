@@ -1,0 +1,22 @@
+@@status
+ok: Found 1 play(s) for: runtime-drift
+
+@@result
+query: runtime-drift
+total_results: 1
+limit: 50
+include_drafts: false
+
+@@next
+- rote registry play pull <org>/<name>
+
+@@plays
+Search results for: runtime-drift
+
+1. runtime-drift (100% match)
+   Four systems each hold an opinion about which runtime version this machine uses, and they disagree silently until something breaks in CI and not locally. This answers one question per runtime: what does the project DECLARE, what does the version MANAGER select, what is actually first on PATH, and what does CI use. The reconciliation table across those four columns is the deliverable, not a list of rule violations. Declarations are read from .nvmrc, .node-version, package.json engines and volta, .python-version, pyproject.toml requires-python, the go.mod go and toolchain directives, rust-toolchain.toml, .ruby-version, .tool-versions and Dockerfile FROM tags. Manager selection is read from the managers OWN STATE FILES - nvm, fnm, nodenv, volta, pyenv, rbenv, asdf and mise - and never by executing a manager, which is also the only way to read nvm at all, since nvm is a shell function with no binary to run. Reality is what command resolution and a version probe actually report, including every other copy of the same runtime further down PATH, because a shim resolving to a version the manager did not select is a real and confusing state. CI is read from setup-node, setup-python, setup-go, setup-ruby and rust-toolchain steps plus container image tags, and a step that delegates to a *-version-file is resolved rather than reported as unknown. Findings are ranked by what breaks: CRITICAL when a project declares a version that is not installed at all, so the declaration is aspirational and whatever is on PATH is silently used instead, and when CI and this machine differ across a feature version; HIGH when two declaration files in one project disagree, and when the version manager selects X while PATH resolves to Y; MEDIUM when a runtime on PATH is past end of life, and when two managers both claim one runtime so which wins depends on shell startup order. A declared range that the installed version satisfies is NOT a finding, and neither is a manager that is installed but unused - both are reported as cleared. Every CRITICAL and HIGH is then re-opened by a separate verify stage that re-reads the exact declaration line from disk and re-runs the exact version probe, emitting CONFIRMED, WITHDRAWN or UNCERTAIN and quoting what it read. THIS PLAY RUNS OTHER PROGRAMS, which is unusual and is disclosed here rather than buried: it executes a version probe from a fixed hard-coded allowlist - node/python3/python/rustc/cargo/ruby/deno/bun --version, java -version, and `go version`, which is the one subcommand on the list because Go has no version flag - with a five second hard timeout each, no shell, a minimal environment, never an argument taken from a config file, and never a binary a repository shipped. A probe that cannot be run safely is marked UNCERTAIN rather than guessed at. End-of-life data is a dated snapshot, not a live feed. Read-only: nothing is installed, activated, switched or written, no network call is made, and no credential is read.
+   version: 0.1.0
+   namespace: lgoyal6
+   status: approved
+   quality: 1.00
+

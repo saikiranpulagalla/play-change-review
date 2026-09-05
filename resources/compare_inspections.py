@@ -1054,6 +1054,38 @@ new_exec = candidate.get("execution") or {}
 old_priv = old_exec.get("privileged_access")
 new_priv = new_exec.get("privileged_access")
 
+
+def privileged_access_capabilities(value):
+    if value in (None, "", "none"):
+        return frozenset()
+
+    if value == "browser":
+        return frozenset({"browser"})
+
+    if value == "process":
+        return frozenset({"process"})
+
+    if value == "process_and_browser":
+        return frozenset({
+            "browser",
+            "process",
+        })
+
+    # Unknown/future privilege declarations remain comparable
+    # as changed values, but PCR must not invent component
+    # semantics for them.
+    return None
+
+
+old_priv_capabilities = (
+    privileged_access_capabilities(old_priv)
+)
+
+new_priv_capabilities = (
+    privileged_access_capabilities(new_priv)
+)
+
+
 declared_access_expansion = False
 
 if old_priv != new_priv:
@@ -1063,10 +1095,13 @@ if old_priv != new_priv:
         f"{old_priv!r} -> {new_priv!r}",
     )
 
-    if old_priv in (None, "", "none") and new_priv not in (
-        None,
-        "",
-        "none",
+    if (
+        old_priv_capabilities is not None
+        and new_priv_capabilities is not None
+        and (
+            new_priv_capabilities
+            - old_priv_capabilities
+        )
     ):
         declared_access_expansion = True
 

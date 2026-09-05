@@ -280,6 +280,136 @@ def test_access_expansion():
     )
 
 
+def test_privileged_access_expansion_matrix():
+    capabilities = {
+        "none": set(),
+        "browser": {"browser"},
+        "process": {"process"},
+        "process_and_browser": {
+            "browser",
+            "process",
+        },
+    }
+
+    for old_priv, old_capabilities in capabilities.items():
+        for new_priv, new_capabilities in capabilities.items():
+            approved = copy.deepcopy(base)
+            candidate = copy.deepcopy(base)
+
+            approved_play = play(approved)
+            candidate_play = play(candidate)
+
+            candidate_play["identity"]["version"] = "0.0.6"
+
+            approved_play.setdefault(
+                "execution",
+                {},
+            )["privileged_access"] = old_priv
+
+            candidate_play.setdefault(
+                "execution",
+                {},
+            )["privileged_access"] = new_priv
+
+            result = compare(
+                approved,
+                candidate,
+            )
+
+            expected_expansion = bool(
+                new_capabilities
+                - old_capabilities
+            )
+
+            actual_expansion = result[
+                "declared_access_expansion_observed"
+            ]
+
+            check(
+                actual_expansion
+                is expected_expansion,
+                (
+                    "wrong privileged-access expansion result "
+                    f"for {old_priv!r} -> {new_priv!r}: "
+                    f"expected {expected_expansion}, "
+                    f"got {actual_expansion}"
+                ),
+            )
+
+            if old_priv != new_priv:
+                check(
+                    "PRIVILEGED_ACCESS_CHANGED"
+                    in result["reason_codes"],
+                    (
+                        "privilege transition missing change reason: "
+                        f"{old_priv!r} -> {new_priv!r}"
+                    ),
+                )
+
+                check(
+                    result["verdict"]
+                    == "MATERIAL_METHOD_CHANGE",
+                    (
+                        "privilege transition did not remain material: "
+                        f"{old_priv!r} -> {new_priv!r}: "
+                        f"{result['verdict']}"
+                    ),
+                )
+
+            else:
+                check(
+                    "PRIVILEGED_ACCESS_CHANGED"
+                    not in result["reason_codes"],
+                    (
+                        "unchanged privilege produced change reason: "
+                        f"{old_priv!r}"
+                    ),
+                )
+
+
+def test_unknown_privileged_access_does_not_invent_expansion():
+    candidate = copy.deepcopy(base)
+
+    approved_play = play(base)
+    candidate_play = play(candidate)
+
+    candidate_play["identity"]["version"] = "0.0.6"
+
+    approved_play = copy.deepcopy(approved_play)
+
+    approved = copy.deepcopy(base)
+
+    play(approved).setdefault(
+        "execution",
+        {},
+    )["privileged_access"] = "browser"
+
+    candidate_play.setdefault(
+        "execution",
+        {},
+    )["privileged_access"] = "future_privilege_mode"
+
+    result = compare(
+        approved,
+        candidate,
+    )
+
+    check(
+        "PRIVILEGED_ACCESS_CHANGED"
+        in result["reason_codes"],
+        "unknown privilege transition was not reported",
+    )
+
+    check(
+        result["declared_access_expansion_observed"]
+        is False,
+        (
+            "PCR invented expansion semantics for "
+            "an unknown privilege value"
+        ),
+    )
+
+
 # ------------------------------------------------------------
 # 6. Same immutable version, different artifact identity
 # ------------------------------------------------------------
@@ -843,6 +973,14 @@ TESTS = [
     ("documentation delta not exact", test_documentation_delta_not_exact),
     ("implementation-only upgrade", test_implementation_only),
     ("declared access expansion", test_access_expansion),
+    (
+        "privileged access expansion matrix",
+        test_privileged_access_expansion_matrix,
+    ),
+    (
+        "unknown privileged access stays conservative",
+        test_unknown_privileged_access_does_not_invent_expansion,
+    ),
     ("immutable identity anomaly", test_integrity_anomaly),
     ("same-version visible mutation", test_same_version_visible_mutation),
     ("different Play identity", test_identity_mismatch),

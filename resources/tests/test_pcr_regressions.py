@@ -203,6 +203,31 @@ def test_implementation_only():
         "implementation change was not detected",
     )
 
+    coverage = result["inspection_coverage"]
+
+    check(
+        coverage["execution_step_fields_compared"]
+        == [
+            "name",
+            "kind",
+            "target",
+            "operation",
+            "depends_on",
+        ],
+        "execution-step comparison coverage is incorrect",
+    )
+
+    check(
+        coverage["step_command_argv_body_compared"] is False,
+        "argv/body coverage was falsely claimed",
+    )
+
+    check(
+        coverage["step_command_argv_body_status"]
+        == "not_exposed_by_inspection_source",
+        "argv/body inspection limitation is missing",
+    )
+
 
 # ------------------------------------------------------------
 # 5. Declared capability/access expansion
@@ -449,10 +474,7 @@ def test_auth_runtime_state_ignored():
         ),
     )
 
-    semantic_codes = (
-        set(result["reason_codes"]) -
-        {"DISCLOSURE_INCOMPLETE"}
-    )
+    semantic_codes = set(result["reason_codes"])
 
     check(
         not semantic_codes,
@@ -460,6 +482,124 @@ def test_auth_runtime_state_ignored():
             "dynamic authentication state produced "
             f"semantic deltas: {sorted(semantic_codes)}"
         ),
+    )
+
+    check(
+        "DISCLOSURE_INCOMPLETE"
+        not in result["reason_codes"],
+        "unchanged unknown disclosure remained noisy",
+    )
+
+
+def test_unchanged_unknown_disclosure_is_limitation():
+    result = compare(auth_base, auth_base)
+
+    check(
+        result["verdict"] == "EXACT_MATCH",
+        f"unexpected verdict: {result['verdict']}",
+    )
+
+    check(
+        "DISCLOSURE_INCOMPLETE"
+        not in result["reason_codes"],
+        "constant unknown disclosure was emitted as a finding",
+    )
+
+    check(
+        "DISCLOSURE_COVERAGE_CHANGED"
+        not in result["reason_codes"],
+        "unchanged disclosure coverage was reported as changed",
+    )
+
+    coverage = result["inspection_coverage"]
+
+    expected = [
+        "adapter_credentials",
+        "browser_auth",
+        "sensitivity",
+    ]
+
+    check(
+        coverage["approved_unknown_disclosure_fields"]
+        == expected,
+        (
+            "approved unknown-disclosure coverage incorrect: "
+            f"{coverage['approved_unknown_disclosure_fields']}"
+        ),
+    )
+
+    check(
+        coverage["candidate_unknown_disclosure_fields"]
+        == expected,
+        (
+            "candidate unknown-disclosure coverage incorrect: "
+            f"{coverage['candidate_unknown_disclosure_fields']}"
+        ),
+    )
+
+    expected_qualified = sorted(
+        [f"approved.{field}" for field in expected]
+        + [f"candidate.{field}" for field in expected]
+    )
+
+    check(
+        result["disclosure_unknowns"]
+        == expected_qualified,
+        (
+            "legacy disclosure_unknowns shape changed: "
+            f"{result['disclosure_unknowns']}"
+        ),
+    )
+
+
+def test_disclosure_coverage_change():
+    candidate = copy.deepcopy(auth_base)
+
+    p = play(candidate)
+    p["identity"]["version"] = "0.1.9"
+
+    p["requirements"]["sensitivity"] = {
+        "status": "known",
+        "source": "synthetic-test",
+    }
+
+    result = compare(auth_base, candidate)
+
+    check(
+        "DISCLOSURE_COVERAGE_CHANGED"
+        in result["reason_codes"],
+        "unknown -> known disclosure change was missed",
+    )
+
+    check(
+        result["verdict"]
+        == "NO_MATERIAL_VISIBLE_CHANGE_OBSERVED",
+        (
+            "informational disclosure coverage change "
+            f"produced unexpected verdict: {result['verdict']}"
+        ),
+    )
+
+    coverage = result["inspection_coverage"]
+
+    check(
+        "sensitivity"
+        in coverage["approved_unknown_disclosure_fields"],
+        "approved sensitivity should be unknown",
+    )
+
+    check(
+        "sensitivity"
+        not in coverage["candidate_unknown_disclosure_fields"],
+        "candidate sensitivity should no longer be unknown",
+    )
+
+    reverse = compare(candidate, auth_base)
+
+    check(
+        "DISCLOSURE_COVERAGE_CHANGED"
+        in reverse["reason_codes"],
+        "known -> unknown disclosure change was missed",
     )
 
 
@@ -711,6 +851,14 @@ TESTS = [
     ("malformed reference rejected", test_malformed_input_rejected),
     ("oversized reference rejected", test_oversized_reference_rejected),
     ("auth runtime state ignored", test_auth_runtime_state_ignored),
+    (
+        "unchanged unknown disclosure is limitation",
+        test_unchanged_unknown_disclosure_is_limitation,
+    ),
+    (
+        "disclosure coverage change",
+        test_disclosure_coverage_change,
+    ),
     ("missing package authority stays unknown", test_missing_package_authority_not_negative),
     ("auth credential requirement added", test_auth_credential_requirement_added),
     ("endpoint fingerprint changed", test_endpoint_fingerprint_change),

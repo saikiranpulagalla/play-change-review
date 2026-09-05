@@ -147,6 +147,10 @@ def emit_result(result):
                 "reviewed_plays_executed",
                 False,
             ),
+        "inspection_coverage":
+            result.get("inspection_coverage", {}),
+        "disclosure_unknowns":
+            result.get("disclosure_unknowns", []),
         "limitations":
             result.get("limitations", []),
         "output_budget": {
@@ -1512,31 +1516,61 @@ if graph_changed:
 # Disclosure completeness
 # ------------------------------------------------------------------
 
-unknown_disclosures = []
+DISCLOSURE_FIELDS = (
+    "adapter_credentials",
+    "browser_auth",
+    "sensitivity",
+)
 
-for side, play in (
-    ("approved", approved),
-    ("candidate", candidate),
-):
+
+def unknown_disclosure_fields(play):
     requirements = play.get("requirements") or {}
 
-    for field in (
-        "adapter_credentials",
-        "browser_auth",
-        "sensitivity",
-    ):
-        value = requirements.get(field)
+    return sorted(
+        field
+        for field in DISCLOSURE_FIELDS
+        if (
+            isinstance(requirements.get(field), dict)
+            and requirements[field].get("status") == "unknown"
+        )
+    )
 
-        if isinstance(value, dict) and value.get("status") == "unknown":
-            unknown_disclosures.append(f"{side}.{field}")
 
-if unknown_disclosures:
+approved_unknown_disclosures = (
+    unknown_disclosure_fields(approved)
+)
+
+candidate_unknown_disclosures = (
+    unknown_disclosure_fields(candidate)
+)
+
+
+disclosure_unknowns = sorted(
+    [
+        f"approved.{field}"
+        for field in approved_unknown_disclosures
+    ]
+    + [
+        f"candidate.{field}"
+        for field in candidate_unknown_disclosures
+    ]
+)
+
+
+if (
+    approved_unknown_disclosures
+    != candidate_unknown_disclosures
+):
     add(
-        "DISCLOSURE_INCOMPLETE",
+        "DISCLOSURE_COVERAGE_CHANGED",
         "disclosure",
         (
-            "Unknown disclosure field(s): "
-            + ", ".join(sorted(unknown_disclosures))
+            "Unknown disclosure-field coverage changed: "
+            "approved=["
+            + ", ".join(approved_unknown_disclosures)
+            + "], candidate=["
+            + ", ".join(candidate_unknown_disclosures)
+            + "]."
         ),
         material=False,
     )
@@ -1593,7 +1627,6 @@ if old_visibility != new_visibility:
 # These describe evidence quality rather than a difference between
 # the approved and candidate release.
 NON_DELTA_NOTICE_CODES = {
-    "DISCLOSURE_INCOMPLETE",
     "CANDIDATE_PACKAGE_NOT_VERIFIED",
 }
 
@@ -1720,6 +1753,29 @@ result = {
 
     "reason_codes": reason_codes,
 
+    "inspection_coverage": {
+        "source": "rote play inspect --json",
+
+        "execution_step_fields_compared": [
+            "name",
+            "kind",
+            "target",
+            "operation",
+            "depends_on",
+        ],
+
+        "step_command_argv_body_compared": False,
+
+        "step_command_argv_body_status":
+            "not_exposed_by_inspection_source",
+
+        "approved_unknown_disclosure_fields":
+            approved_unknown_disclosures,
+
+        "candidate_unknown_disclosure_fields":
+            candidate_unknown_disclosures,
+    },
+
     # Evidence is deliberately bounded. Semantic totals above are
     # complete and are always computed before sampling.
     "changes": bounded_change_list,
@@ -1802,7 +1858,7 @@ result = {
     },
 
     "disclosure_unknowns":
-        sorted(unknown_disclosures),
+        disclosure_unknowns,
 
     "reviewed_plays_executed": False,
 
@@ -1815,6 +1871,10 @@ result = {
         (
             "No safety or maliciousness conclusion is made from an "
             "unchanged declared contract."
+        ),
+        (
+            "Step command argv/body is not exposed by the current "
+            "inspection source and is not compared."
         ),
         (
             "Unknown disclosure fields remain unknown; they are not "

@@ -224,6 +224,11 @@ if (comparison === null) {
 
 const verdict = comparison?.verdict ?? "BLOCKED";
 
+const humanVerdict =
+  verdict === "IMPLEMENTATION_CHANGED_SAME_VISIBLE_CONTRACT"
+    ? "IMPLEMENTATION CHANGED"
+    : verdict;
+
 const approvedIdentity =
   comparison?.approved?.identity ??
   comparison?.approved_ref ??
@@ -252,6 +257,34 @@ const reasonCodes =
     ? comparison.reason_codes
     : [];
 
+const inspectionCoverage =
+  comparison?.inspection_coverage ?? {};
+
+const comparedStepFields =
+  Array.isArray(
+    inspectionCoverage?.execution_step_fields_compared
+  )
+    ? inspectionCoverage.execution_step_fields_compared
+    : [];
+
+const approvedUnknownDisclosures =
+  Array.isArray(
+    inspectionCoverage?.approved_unknown_disclosure_fields
+  )
+    ? inspectionCoverage.approved_unknown_disclosure_fields
+    : [];
+
+const candidateUnknownDisclosures =
+  Array.isArray(
+    inspectionCoverage?.candidate_unknown_disclosure_fields
+  )
+    ? inspectionCoverage.candidate_unknown_disclosure_fields
+    : [];
+
+const sameUnknownDisclosureCoverage =
+  JSON.stringify(approvedUnknownDisclosures) ===
+  JSON.stringify(candidateUnknownDisclosures);
+
 const totalFindingCount =
   comparison?.counts?.total_findings ??
   changes.length;
@@ -273,9 +306,18 @@ const lines: string[] = [
   `APPROVED   ${safeText(approvedIdentity)}`,
   `CANDIDATE  ${safeText(candidateIdentity)}`,
   "",
-  `VERDICT    ${verdict}`,
+  `VERDICT    ${humanVerdict}`,
   "",
 ];
+
+if (
+  verdict === "IMPLEMENTATION_CHANGED_SAME_VISIBLE_CONTRACT"
+) {
+  lines.push(
+    "No material change was observed in the registry-visible fields PCR can compare.",
+    ""
+  );
+}
 
 if (
   comparison?.ok === true &&
@@ -322,6 +364,62 @@ if (
 
   lines.push(
     "",
+    "INSPECTION COVERAGE",
+    comparedStepFields.length
+      ? (
+          "Compared execution step fields: " +
+          safeText(comparedStepFields.join(", "), 240) +
+          "."
+        )
+      : "Compared execution step fields: unavailable.",
+    inspectionCoverage?.step_command_argv_body_compared === false
+      ? (
+          "Step command argv/body: not exposed by the " +
+          "inspection source and not compared."
+        )
+      : "Step command argv/body coverage: see JSON output.",
+  );
+
+  if (sameUnknownDisclosureCoverage) {
+    lines.push(
+      approvedUnknownDisclosures.length
+        ? (
+            "Unknown disclosure fields on both releases: " +
+            safeText(
+              approvedUnknownDisclosures.join(", "),
+              240
+            ) +
+            "."
+          )
+        : "Unknown disclosure fields on both releases: none."
+    );
+  } else {
+    lines.push(
+      "Approved unknown disclosure fields: " +
+        (
+          approvedUnknownDisclosures.length
+            ? safeText(
+                approvedUnknownDisclosures.join(", "),
+                240
+              )
+            : "none"
+        ) +
+        ".",
+      "Candidate unknown disclosure fields: " +
+        (
+          candidateUnknownDisclosures.length
+            ? safeText(
+                candidateUnknownDisclosures.join(", "),
+                240
+              )
+            : "none"
+        ) +
+        "."
+    );
+  }
+
+  lines.push(
+    "",
     "REASON CODES",
     ...(reasonCodes.length
       ? reasonCodes.map((code: string) => `- ${code}`)
@@ -347,6 +445,7 @@ lines.push(
   "BOUNDARY",
   "Neither reviewed Play was executed.",
   "This review does not establish behavioral equivalence or safety.",
+  "Step command argv/body is not exposed by the current inspection source and is not compared.",
   "Unknown disclosure fields remain unknown; they are never treated as none.",
 );
 
@@ -354,7 +453,7 @@ out.human(lines.join("\n"));
 
 out.summary(
   comparison?.ok === true
-    ? `${verdict} — ${materialCount} material change type(s)`
+    ? `${humanVerdict} — ${materialCount} material change type(s)`
     : `BLOCKED — ${comparison?.error_code ?? "review did not complete"}`
 );
 
@@ -367,7 +466,7 @@ out.result({
   },
   representations: {
     human:
-      "complete — verdict, identities, bounded findings, complete counts/reason codes and review boundary",
+      "complete — verdict, identities, bounded findings, complete counts/reason codes, inspection coverage and review boundary",
     json:
       "canonical — complete verdict, counts and reason codes with bounded deterministic evidence or a structured blocked reason",
     summary:

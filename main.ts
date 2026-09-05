@@ -24,7 +24,7 @@
  *   author: Sai
  * metadata:
  *   rote_version: 0.78.0
- *   version: 0.1.1
+ *   version: 0.1.2
  *   status: released
  *   kind: atomic
  *   flow_type: parallel

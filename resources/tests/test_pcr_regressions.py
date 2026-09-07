@@ -241,7 +241,7 @@ def test_access_expansion():
     requirements = p["requirements"]
 
     requirements.setdefault("endpoints", []).append(
-        "adapter/github"
+        {"endpoint": "adapter/github", "mcp_fingerprint": "mcp-test"}
     )
 
     requirements.setdefault("write_permissions", []).append({
@@ -251,7 +251,7 @@ def test_access_expansion():
     })
 
     p["authentication"].setdefault("adapters", []).append(
-        "github"
+        {"adapter": "github", "credential_names": [], "protocols": []}
     )
 
     result = compare(base, candidate)
@@ -394,15 +394,16 @@ def test_unknown_privileged_access_does_not_invent_expansion():
         candidate,
     )
 
+    check(result["verdict"] == "COMPARISON_INCOMPLETE", "unknown privilege gave a complete verdict")
     check(
         "PRIVILEGED_ACCESS_CHANGED"
-        in result["reason_codes"],
-        "unknown privilege transition was not reported",
+        not in result["reason_codes"],
+        "unknown privilege must not establish a capability delta",
     )
 
     check(
         result["declared_access_expansion_observed"]
-        is False,
+        is None,
         (
             "PCR invented expansion semantics for "
             "an unknown privilege value"
@@ -595,9 +596,13 @@ def test_auth_runtime_state_ignored():
     adapter["reason"] = "synthetic local inspection state"
 
     result = compare(auth_base, candidate)
+    # Missing compared evidence prevents a complete verdict, while known
+    # domains retain their findings. Never fabricate the omitted package.
+    check(result["inspection_coverage"]["comparison_complete"] is False,
+          "missing evidence was silently treated as complete")
 
     check(
-        result["verdict"] == "EXACT_MATCH",
+        result["verdict"] == "COMPARISON_INCOMPLETE",
         (
             "dynamic authentication inspection state "
             f"affected semantics: {result['verdict']}"
@@ -623,9 +628,13 @@ def test_auth_runtime_state_ignored():
 
 def test_unchanged_unknown_disclosure_is_limitation():
     result = compare(auth_base, auth_base)
+    # Missing compared evidence prevents a complete verdict, while known
+    # domains retain their findings. Never fabricate the omitted package.
+    check(result["inspection_coverage"]["comparison_complete"] is False,
+          "missing evidence was silently treated as complete")
 
     check(
-        result["verdict"] == "EXACT_MATCH",
+        result["verdict"] == "COMPARISON_INCOMPLETE",
         f"unexpected verdict: {result['verdict']}",
     )
 
@@ -646,6 +655,10 @@ def test_unchanged_unknown_disclosure_is_limitation():
     expected = [
         "adapter_credentials",
         "browser_auth",
+        "package.authority",
+        "package.digest",
+        "package.files",
+        "package.tools",
         "sensitivity",
     ]
 
@@ -694,6 +707,10 @@ def test_disclosure_coverage_change():
     }
 
     result = compare(auth_base, candidate)
+    # Missing compared evidence prevents a complete verdict, while known
+    # domains retain their findings. Never fabricate the omitted package.
+    check(result["inspection_coverage"]["comparison_complete"] is False,
+          "missing evidence was silently treated as complete")
 
     check(
         "DISCLOSURE_COVERAGE_CHANGED"
@@ -703,7 +720,7 @@ def test_disclosure_coverage_change():
 
     check(
         result["verdict"]
-        == "NO_MATERIAL_VISIBLE_CHANGE_OBSERVED",
+        == "COMPARISON_INCOMPLETE",
         (
             "informational disclosure coverage change "
             f"produced unexpected verdict: {result['verdict']}"
@@ -766,9 +783,17 @@ def test_auth_credential_requirement_added():
     )
 
     result = compare(auth_base, candidate)
+    check(any(c["code"] == "AUTH_CREDENTIAL_REQUIREMENT_ADDED" and c["material"] is True for c in result["changes"]),
+          "known material change was lost behind incomplete package coverage")
+    check(result["counts"]["material_types"] == 1 and result["counts"]["material_findings"] == 1,
+          "known change must remain in material counts")
+    # Missing compared evidence prevents a complete verdict, while known
+    # domains retain their findings. Never fabricate the omitted package.
+    check(result["inspection_coverage"]["comparison_complete"] is False,
+          "missing evidence was silently treated as complete")
 
     check(
-        result["verdict"] == "MATERIAL_METHOD_CHANGE",
+        result["verdict"] == "COMPARISON_INCOMPLETE",
         f"unexpected verdict: {result['verdict']}",
     )
 
@@ -806,9 +831,17 @@ def test_endpoint_fingerprint_change():
     )
 
     result = compare(auth_base, candidate)
+    check(any(c["code"] == "ENDPOINT_FINGERPRINT_CHANGED" and c["material"] is True for c in result["changes"]),
+          "known material change was lost behind incomplete package coverage")
+    check(result["counts"]["material_types"] == 1 and result["counts"]["material_findings"] == 1,
+          "known change must remain in material counts")
+    # Missing compared evidence prevents a complete verdict, while known
+    # domains retain their findings. Never fabricate the omitted package.
+    check(result["inspection_coverage"]["comparison_complete"] is False,
+          "missing evidence was silently treated as complete")
 
     check(
-        result["verdict"] == "MATERIAL_METHOD_CHANGE",
+        result["verdict"] == "COMPARISON_INCOMPLETE",
         f"unexpected verdict: {result['verdict']}",
     )
 
@@ -885,9 +918,13 @@ def test_missing_package_authority_not_negative():
     )
 
     result = compare(approved, candidate)
+    # Missing compared evidence prevents a complete verdict, while known
+    # domains retain their findings. Never fabricate the omitted package.
+    check(result["inspection_coverage"]["comparison_complete"] is False,
+          "missing evidence was silently treated as complete")
 
     check(
-        result["verdict"] == "EXACT_MATCH",
+        result["verdict"] == "COMPARISON_INCOMPLETE",
         f"missing authority changed verdict: {result['verdict']}",
     )
 
@@ -918,6 +955,10 @@ def test_content_hash_disclosure_loss():
     p["archive"].pop("content_hash", None)
 
     result = compare(base, candidate)
+    # Missing compared evidence prevents a complete verdict, while known
+    # domains retain their findings. Never fabricate the omitted package.
+    check(result["inspection_coverage"]["comparison_complete"] is False,
+          "missing evidence was silently treated as complete")
 
     check(
         "ARTIFACT_IDENTITY_DISCLOSURE_CHANGED"
@@ -933,7 +974,7 @@ def test_content_hash_disclosure_loss():
 
     check(
         result["verdict"]
-        == "NO_MATERIAL_VISIBLE_CHANGE_OBSERVED",
+        == "COMPARISON_INCOMPLETE",
         f"unexpected verdict: {result['verdict']}",
     )
 
@@ -947,6 +988,10 @@ def test_package_digest_disclosure_loss():
     p["package"].pop("digest", None)
 
     result = compare(base, candidate)
+    # Missing compared evidence prevents a complete verdict, while known
+    # domains retain their findings. Never fabricate the omitted package.
+    check(result["inspection_coverage"]["comparison_complete"] is False,
+          "missing evidence was silently treated as complete")
 
     check(
         "ARTIFACT_IDENTITY_DISCLOSURE_CHANGED"
@@ -962,12 +1007,31 @@ def test_package_digest_disclosure_loss():
 
     check(
         result["verdict"]
-        == "NO_MATERIAL_VISIBLE_CHANGE_OBSERVED",
+        == "COMPARISON_INCOMPLETE",
         f"unexpected verdict: {result['verdict']}",
     )
 
 
+def test_parameter_type_is_material():
+    # Independent isolated mutation: no other field can supply the verdict.
+    for old_type, new_type in (("string", "integer"), ("integer", "string")):
+        approved = copy.deepcopy(base)
+        candidate = copy.deepcopy(base)
+        play(candidate)["identity"]["version"] = "0.0.6"
+        play(approved)["parameters"][0]["type"] = old_type
+        play(candidate)["parameters"][0]["type"] = new_type
+        result = compare(approved, candidate)
+        check(result["ok"] is True, "type comparison did not complete")
+        check(result["reason_codes"] == ["PARAMETER_TYPE_CHANGED"], "type delta missing or masked")
+        check(len(result["changes"]) == 1 and result["changes"][0]["material"] is True,
+              "parameter type must be material")
+        check(result["counts"]["material_types"] == 1 and result["counts"]["material_findings"] == 1,
+              "type change missing from complete material counts")
+        check(result["verdict"] == "MATERIAL_METHOD_CHANGE", "type change must determine the verdict")
+
+
 TESTS = [
+    ("parameter type is material", test_parameter_type_is_material),
     ("exact immutable match", test_exact_match),
     ("dynamic state ignored", test_dynamic_noise_ignored),
     ("documentation delta not exact", test_documentation_delta_not_exact),

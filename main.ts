@@ -19,12 +19,12 @@
  *   - change-review
  *   - agent-governance
  *   - release-review
- * description: "You trusted one Play version. What changed in the next one? Compares two immutable releases of the same Play across inputs, declared access, runtime requirements, registry-visible execution structure and artifact identity without executing either reviewed Play."
+ * description: You trusted one Play version. What changed in the next one? Compares two immutable releases of the same Play across inputs, declared access, runtime requirements, registry-visible execution structure and artifact identity without executing either reviewed Play.
  * provenance:
  *   author: Sai
  * metadata:
  *   rote_version: 0.78.0
- *   version: 0.1.3
+ *   version: 0.1.4
  *   status: released
  *   kind: atomic
  *   flow_type: parallel
@@ -52,15 +52,15 @@
  *   param_type: string
  *   required: true
  *   default: null
- *   description: "Exact immutable URI or owner/name@version for the Play release you already reviewed or trusted."
- *   example: "amaan-playoffs/git-handoff-snapshot@0.1.0"
+ *   description: Exact immutable URI or owner/name@version for the Play release you already reviewed or trusted.
+ *   example: amaan-playoffs/git-handoff-snapshot@0.1.0
  *   valid_values: null
  * - name: candidate
  *   param_type: string
  *   required: true
  *   default: null
- *   description: "Exact immutable URI or owner/name@version for the candidate release you want to review."
- *   example: "amaan-playoffs/git-handoff-snapshot@0.2.0"
+ *   description: Exact immutable URI or owner/name@version for the candidate release you want to review.
+ *   example: amaan-playoffs/git-handoff-snapshot@0.2.0
  *   valid_values: null
  * steps:
  *   validate_approved:
@@ -310,6 +310,19 @@ const lines: string[] = [
   "",
 ];
 
+if (inspectionCoverage?.comparison_complete === false) {
+  lines.push(
+    "COMPARISON INCOMPLETE — one or more supported domains were unavailable.",
+    "No equality or complete no-change conclusion is established.",
+    "Unavailable domains: " + safeText(
+      Object.entries(inspectionCoverage?.domains ?? {})
+        .filter(([, state]: [string, any]) => state?.comparable !== true)
+        .map(([name]) => name).join(", "), 800
+    ),
+    ""
+  );
+}
+
 if (
   verdict === "IMPLEMENTATION_CHANGED_SAME_VISIBLE_CONTRACT"
 ) {
@@ -337,7 +350,9 @@ if (
     "DECLARED ACCESS",
     comparison.declared_access_expansion_observed === true
       ? "Expansion observed in compared declared fields."
-      : "No declared access expansion observed in compared fields.",
+      : comparison.declared_access_expansion_observed === false
+        ? "No declared access expansion observed in compared fields."
+        : "UNKNOWN — declared access comparison is incomplete; expansion or reduction is not established.",
     "",
     "CHANGES",
     `${materialCount} material change type(s) · ${informationalCount} informational type(s)`,

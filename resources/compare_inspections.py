@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -193,6 +194,8 @@ def fail(message):
         "ok": False,
         "verdict": "BLOCKED",
         "error": message,
+        "comparison_performed": False,
+        "reviewed_plays_executed": False,
     }, separators=(",", ":")))
     raise SystemExit(2)
 
@@ -203,17 +206,25 @@ def parse_inspection(raw, label):
     except Exception:
         fail(f"{label}: inspect output was not valid JSON")
 
-    if wrapper.get("ok") is not True:
+    if not isinstance(wrapper, dict) or wrapper.get("ok") is not True:
         fail(f"{label}: inspection did not succeed")
 
     try:
-        return wrapper["data"]["play_inspect"]
+        value = wrapper["data"]["play_inspect"]
+        if not isinstance(value, dict):
+            fail(f"{label}: play_inspect was not an object")
+        return value
     except Exception:
         fail(f"{label}: play_inspect object missing")
 
 
 def identity(play):
-    value = play.get("identity", {})
+    value = play.get("identity")
+    if not isinstance(value, dict) or not all(
+        isinstance(value.get(key), str) and value[key].strip()
+        for key in ("owner", "name", "version")
+    ):
+        fail("Inspection identity was unavailable or malformed")
     return {
         "owner": value.get("owner"),
         "name": value.get("name"),
@@ -293,31 +304,6 @@ def canonical(value):
     )
 
 
-def disclosed_value(obj, field):
-    """
-    Distinguish unknown disclosure from an explicitly
-    disclosed empty value.
-
-    Missing key or explicit null => not disclosed.
-    Any non-null value => disclosed.
-
-    Type validation remains a separate hardening concern;
-    this helper deliberately does not broaden Stage 2A.
-    """
-    if not isinstance(obj, dict):
-        return False, None
-
-    if field not in obj:
-        return False, None
-
-    value = obj[field]
-
-    if value is None:
-        return False, None
-
-    return True, value
-
-
 def normalized_valid_values(value):
     """
     valid_values is an acceptance set, not an ordered UI list.
@@ -337,7 +323,7 @@ def normalized_valid_values(value):
 
 def set_map(values):
     result = {}
-    for value in values or []:
+    for value in values:
         result[canonical(value)] = value
     return result
 
@@ -413,106 +399,39 @@ def duplicate_identity(
 
 def by_name(values, key="name"):
     result = {}
-    for value in values or []:
-        if isinstance(value, dict) and value.get(key):
-            result[str(value[key])] = value
+    for value in values:
+        result[value[key]] = value
     return result
 
 
 def endpoint_map(values):
+    # Endpoint identities have been validated. Missing fingerprints remain
+    # None and have their own unavailable coverage; they are never identities.
     result = {}
-
-    for value in values or []:
-        # Some resolved contracts expose endpoints as plain strings.
-        if isinstance(value, str) and value:
-            result[value] = {
-                "endpoint": value,
-                "mcp_fingerprint": None,
-            }
-            continue
-
-        # Newer/richer contracts may expose structured endpoint
-        # identity including an MCP fingerprint.
-        if not isinstance(value, dict):
-            continue
-
-        endpoint = value.get("endpoint")
-
-        if not endpoint:
-            continue
-
-        endpoint = str(endpoint)
-
-        result[endpoint] = {
-            "endpoint": endpoint,
-            "mcp_fingerprint": value.get("mcp_fingerprint"),
-        }
-
+    for value in values:
+        endpoint = value if isinstance(value, str) else value["endpoint"]
+        fingerprint = value.get("mcp_fingerprint") if isinstance(value, dict) else None
+        result[endpoint] = {"endpoint": endpoint,
+                            "mcp_fingerprint": fingerprint if text_value(fingerprint) else None}
     return result
 
 
 def auth_adapter_map(values):
-    """
-    Normalize authentication adapters to declared contract only.
-
-    Deliberately ignored as dynamic/reviewer-local state:
-    - status
-    - credentials
-    - reason
-
-    Compared as version semantics:
-    - adapter
-    - credential_names
-    - protocols
-    """
     result = {}
-
-    for value in values or []:
-        if isinstance(value, str) and value:
-            result[value] = {
-                "adapter": value,
-                "credential_names": [],
-                "protocols": [],
+    for value in values:
+        if isinstance(value, str):
+            result[value] = {"credential_names": None, "protocols": None}
+        else:
+            result[value["adapter"]] = {
+                "credential_names": value.get("credential_names"),
+                "protocols": value.get("protocols"),
             }
-            continue
-
-        if not isinstance(value, dict):
-            continue
-
-        adapter = value.get("adapter")
-
-        if not adapter:
-            continue
-
-        adapter = str(adapter)
-
-        credential_names = sorted({
-            str(item)
-            for item in (value.get("credential_names") or [])
-            if item is not None
-        })
-
-        protocols = sorted({
-            str(item)
-            for item in (value.get("protocols") or [])
-            if item is not None
-        })
-
-        result[adapter] = {
-            "adapter": adapter,
-            "credential_names": credential_names,
-            "protocols": protocols,
-        }
-
     return result
 
 
 def string_set(values):
-    return {
-        str(value)
-        for value in (values or [])
-        if value is not None
-    }
+    # Called only for a validated, comparable credential/protocol domain.
+    return set(values)
 
 
 def parameter_ui_choices(parameter):
@@ -529,6 +448,156 @@ def parameter_ui_choices(parameter):
             values.append(choice["value"])
 
     return values
+
+
+# Evidence is classified before normalization. Fixed domain names keep coverage
+# bounded; no user-provided member names are copied into the coverage schema.
+MISSING = object()
+MALFORMED_PARENT = object()
+KNOWN = "known_valid"
+UNKNOWN = "unknown"
+MALFORMED = "malformed"
+UNSUPPORTED = "unsupported"
+STEP_FIELDS = ["name", "kind", "target", "operation", "depends_on"]
+
+
+def object_value(value):
+    """Container access only; evidence_for classifies the original raw shape."""
+    return value if isinstance(value, dict) else {}
+
+
+def path_value(play, path):
+    value = play
+    for key in path.split("."):
+        if value is MISSING or value is None:
+            return value
+        if not isinstance(value, dict):
+            return MALFORMED_PARENT
+        value = value.get(key, MISSING)
+    return value
+
+
+def text_value(value):
+    return isinstance(value, str) and bool(value.strip())
+
+
+def value_state(value, valid):
+    if value is MISSING or value is None:
+        return UNKNOWN
+    return KNOWN if valid(value) else MALFORMED
+
+
+def list_state(value, valid_member):
+    return value_state(value, lambda v: isinstance(v, list) and all(valid_member(x) for x in v))
+
+
+def named(value, key):
+    return isinstance(value, dict) and text_value(value.get(key))
+
+
+def parameter_valid(value):
+    if not (named(value, "name") and text_value(value.get("type"))
+            and type(value.get("required")) is bool):
+        return False
+    # These optional fields are omitted/null when no default/acceptance set/UI
+    # was declared by the current provider. Their omission is not an empty
+    # parameters collection. JSON defaults retain type-sensitive equality.
+    if value.get("valid_values") is not None and not isinstance(value["valid_values"], list):
+        return False
+    ui = value.get("input")
+    if ui is None:
+        return True
+    if not isinstance(ui, dict):
+        return False
+    choices = ui.get("choices")
+    return choices is None or (isinstance(choices, list) and all(
+        isinstance(x, dict) and "value" in x for x in choices))
+
+
+def step_valid(value):
+    return (named(value, "name") and all(text_value(value.get(k))
+            for k in ("kind", "target", "operation"))
+            # Rote omits depends_on for roots; explicit null/wrong types are
+            # not that documented omission convention.
+            and ("depends_on" not in value or list_state(value["depends_on"], text_value) == KNOWN))
+
+
+def runtime_valid(value):
+    return (named(value, "name") and type(value.get("required")) is bool
+            and all(isinstance(value.get(k), str) for k in ("managed_by", "reason")))
+
+
+def tool_valid(value):
+    return (named(value, "id") and text_value(value.get("command"))
+            and type(value.get("required")) is bool
+            and (value.get("version_requirement") is None
+                 or text_value(value["version_requirement"])))
+
+
+def artifact_evidence(value, digest=False):
+    state = value_state(value, text_value)
+    if state != KNOWN:
+        return {"state": state, "value": None}
+    prefix = "installed-package-sha256-v1:" if digest else ""
+    if digest and not value.startswith(prefix):
+        state = UNSUPPORTED
+    elif re.fullmatch(re.escape(prefix) + r"[0-9a-fA-F]{64}", value):
+        return {"state": KNOWN, "value": value.lower()}
+    else:
+        state = MALFORMED
+    return {"state": state, "value": None}
+
+
+def privilege_state(value):
+    state = value_state(value, text_value)
+    if state == KNOWN and value not in ("none", "browser", "process", "process_and_browser"):
+        return UNSUPPORTED
+    return state
+
+
+def nested_list_state(collection, identity_key, field):
+    state = list_state(collection, lambda x: text_value(x) or named(x, identity_key))
+    if state != KNOWN:
+        return state
+    states = [list_state(x.get(field, MISSING), text_value)
+              if isinstance(x, dict) else UNKNOWN for x in collection]
+    return MALFORMED if MALFORMED in states else UNKNOWN if UNKNOWN in states else KNOWN
+
+
+def evidence_for(play):
+    result = {}
+    validators = {
+        "parameters": parameter_valid,
+        "steps": step_valid,
+        "requirements.runtimes": runtime_valid,
+        "package.tools": tool_valid,
+        "package.files": text_value,
+        "requirements.npm_packages": text_value,
+        "requirements.browser_binaries": text_value,
+        "requirements.write_permissions": lambda x: text_value(x) or (
+            isinstance(x, dict) and all(text_value(x.get(k)) for k in ("tool", "adapter", "mode"))),
+        "requirements.endpoints": lambda x: text_value(x) or named(x, "endpoint"),
+        "authentication.adapters": lambda x: text_value(x) or named(x, "adapter"),
+    }
+    for domain, valid in validators.items():
+        result[domain] = list_state(path_value(play, domain), valid)
+    result["authentication.read_only"] = value_state(
+        path_value(play, "authentication.read_only"), lambda x: type(x) is bool)
+    result["execution.privileged_access"] = privilege_state(path_value(play, "execution.privileged_access"))
+    for field in ("credential_names", "protocols"):
+        result["authentication." + field] = nested_list_state(
+            path_value(play, "authentication.adapters"), "adapter", field)
+    endpoints = path_value(play, "requirements.endpoints")
+    state = result["requirements.endpoints"]
+    if state == KNOWN:
+        states = [value_state(x.get("mcp_fingerprint", MISSING), text_value)
+                  if isinstance(x, dict) else UNKNOWN for x in endpoints]
+        state = MALFORMED if MALFORMED in states else UNKNOWN if UNKNOWN in states else KNOWN
+    result["requirements.endpoint_fingerprints"] = state
+    result["archive.content_hash"] = artifact_evidence(path_value(play, "archive.content_hash"))["state"]
+    result["package.digest"] = artifact_evidence(path_value(play, "package.digest"), True)["state"]
+    result["package.authority"] = value_state(path_value(play, "package.authority"), text_value)
+    return result
 
 
 if len(sys.argv) == 4 and sys.argv[1] == "--files":
@@ -553,9 +622,9 @@ def check_ambiguous_structure(
     approved_identity,
     candidate_identity,
 ):
-    requirements = play.get("requirements") or {}
-    package = play.get("package") or {}
-    authentication = play.get("authentication") or {}
+    requirements = object_value(play.get("requirements"))
+    package = object_value(play.get("package"))
+    authentication = object_value(play.get("authentication"))
 
     checks = (
         (
@@ -739,11 +808,31 @@ if not same_play:
 # Artifact identity
 # ------------------------------------------------------------------
 
-old_hash = (approved.get("archive") or {}).get("content_hash")
-new_hash = (candidate.get("archive") or {}).get("content_hash")
+approved_evidence = evidence_for(approved)
+candidate_evidence = evidence_for(candidate)
 
-old_digest = (approved.get("package") or {}).get("digest")
-new_digest = (candidate.get("package") or {}).get("digest")
+
+def comparable(domain):
+    return approved_evidence[domain] == KNOWN and candidate_evidence[domain] == KNOWN
+
+
+comparison_domains = {
+    domain: {"approved": approved_evidence[domain], "candidate": candidate_evidence[domain],
+             "comparable": comparable(domain)}
+    for domain in sorted(approved_evidence)
+}
+comparison_complete = all(row["comparable"] for row in comparison_domains.values())
+access_comparison_complete = all(comparable(domain) for domain in (
+    "execution.privileged_access", "requirements.write_permissions", "requirements.endpoints",
+    "authentication.read_only", "authentication.adapters", "authentication.credential_names",
+    "authentication.protocols", "requirements.endpoint_fingerprints",
+))
+
+
+old_hash = artifact_evidence(path_value(approved, "archive.content_hash"))["value"]
+new_hash = artifact_evidence(path_value(candidate, "archive.content_hash"))["value"]
+old_digest = artifact_evidence(path_value(approved, "package.digest"), True)["value"]
+new_digest = artifact_evidence(path_value(candidate, "package.digest"), True)["value"]
 
 hash_changed = (
     old_hash is not None
@@ -815,18 +904,14 @@ if artifact_identity_disclosure_changed:
     )
 
 
-old_package = approved.get("package") or {}
-new_package = candidate.get("package") or {}
+old_package = object_value(approved.get("package"))
+new_package = object_value(candidate.get("package"))
 
-old_files_disclosed, old_files = disclosed_value(
-    old_package,
-    "files",
-)
+old_files_disclosed = approved_evidence["package.files"] == KNOWN
+old_files = old_package.get("files")
 
-new_files_disclosed, new_files = disclosed_value(
-    new_package,
-    "files",
-)
+new_files_disclosed = candidate_evidence["package.files"] == KNOWN
+new_files = new_package.get("files")
 
 files_comparison_available = (
     old_files_disclosed
@@ -868,8 +953,10 @@ elif old_files_disclosed != new_files_disclosed:
     )
 
 
-old_authority = (approved.get("package") or {}).get("authority")
-new_authority = (candidate.get("package") or {}).get("authority")
+old_authority = (path_value(approved, "package.authority")
+                 if approved_evidence["package.authority"] == KNOWN else None)
+new_authority = (path_value(candidate, "package.authority")
+                 if candidate_evidence["package.authority"] == KNOWN else None)
 
 # Missing authority is unknown disclosure, not a negative trust claim.
 #
@@ -916,147 +1003,148 @@ if (
 # Parameters
 # ------------------------------------------------------------------
 
-old_params = by_name(approved.get("parameters"))
-new_params = by_name(candidate.get("parameters"))
+if comparable("parameters"):
+    old_params = by_name(approved.get("parameters"))
+    new_params = by_name(candidate.get("parameters"))
 
-for name in sorted(old_params.keys() - new_params.keys()):
-    add(
-        "PARAMETER_REMOVED",
-        "input",
-        f"{name}: removed",
-    )
+    for name in sorted(old_params.keys() - new_params.keys()):
+        add(
+            "PARAMETER_REMOVED",
+            "input",
+            f"{name}: removed",
+        )
 
-for name in sorted(new_params.keys() - old_params.keys()):
-    add(
-        "PARAMETER_ADDED",
-        "input",
-        f"{name}: added",
-    )
+    for name in sorted(new_params.keys() - old_params.keys()):
+        add(
+            "PARAMETER_ADDED",
+            "input",
+            f"{name}: added",
+        )
 
-for name in sorted(old_params.keys() & new_params.keys()):
-    old = old_params[name]
-    new = new_params[name]
+    for name in sorted(old_params.keys() & new_params.keys()):
+        old = old_params[name]
+        new = new_params[name]
 
-    for field, code in (
-        ("type", "PARAMETER_TYPE_CHANGED"),
-        ("required", "PARAMETER_REQUIRED_CHANGED"),
-        ("default", "PARAMETER_DEFAULT_CHANGED"),
-    ):
-        if old.get(field) != new.get(field):
+        for field, code in (
+            ("type", "PARAMETER_TYPE_CHANGED"),
+            ("required", "PARAMETER_REQUIRED_CHANGED"),
+            ("default", "PARAMETER_DEFAULT_CHANGED"),
+        ):
+            if canonical(old.get(field)) != canonical(new.get(field)):
+                add(
+                    code,
+                    "input",
+                    (
+                        f"{name}.{field}: "
+                        f"{old.get(field)!r} -> {new.get(field)!r}"
+                    ),
+                )
+
+        for field, code in (
+            (
+                "description",
+                "PARAMETER_DESCRIPTION_CHANGED",
+            ),
+            (
+                "example",
+                "PARAMETER_EXAMPLE_CHANGED",
+            ),
+        ):
+            if canonical(old.get(field)) != canonical(new.get(field)):
+                add(
+                    code,
+                    "input",
+                    (
+                        f"{name}.{field}: "
+                        f"{old.get(field)!r} -> "
+                        f"{new.get(field)!r}"
+                    ),
+                    material=False,
+                )
+
+        old_input = old.get("input") or {}
+        new_input = new.get("input") or {}
+
+        old_label = old_input.get("label")
+        new_label = new_input.get("label")
+
+        if old_label != new_label:
             add(
-                code,
+                "PARAMETER_LABEL_CHANGED",
                 "input",
                 (
-                    f"{name}.{field}: "
-                    f"{old.get(field)!r} -> {new.get(field)!r}"
-                ),
-            )
-
-    for field, code in (
-        (
-            "description",
-            "PARAMETER_DESCRIPTION_CHANGED",
-        ),
-        (
-            "example",
-            "PARAMETER_EXAMPLE_CHANGED",
-        ),
-    ):
-        if old.get(field) != new.get(field):
-            add(
-                code,
-                "input",
-                (
-                    f"{name}.{field}: "
-                    f"{old.get(field)!r} -> "
-                    f"{new.get(field)!r}"
+                    f"{name}.input.label: "
+                    f"{old_label!r} -> {new_label!r}"
                 ),
                 material=False,
             )
 
-    old_input = old.get("input") or {}
-    new_input = new.get("input") or {}
+        old_valid = old.get("valid_values")
+        new_valid = new.get("valid_values")
 
-    old_label = old_input.get("label")
-    new_label = new_input.get("label")
-
-    if old_label != new_label:
-        add(
-            "PARAMETER_LABEL_CHANGED",
-            "input",
-            (
-                f"{name}.input.label: "
-                f"{old_label!r} -> {new_label!r}"
-            ),
-            material=False,
+        old_valid_normalized = normalized_valid_values(
+            old_valid
         )
 
-    old_valid = old.get("valid_values")
-    new_valid = new.get("valid_values")
-
-    old_valid_normalized = normalized_valid_values(
-        old_valid
-    )
-
-    new_valid_normalized = normalized_valid_values(
-        new_valid
-    )
-
-    if (
-        old_valid_normalized
-        != new_valid_normalized
-    ):
-        add(
-            "PARAMETER_VALID_VALUES_CHANGED",
-            "input",
-            (
-                f"{name}.valid_values: "
-                f"{old_valid!r} -> {new_valid!r}"
-            ),
+        new_valid_normalized = normalized_valid_values(
+            new_valid
         )
 
-    old_choices = parameter_ui_choices(old)
-    new_choices = parameter_ui_choices(new)
+        if (
+            old_valid_normalized
+            != new_valid_normalized
+        ):
+            add(
+                "PARAMETER_VALID_VALUES_CHANGED",
+                "input",
+                (
+                    f"{name}.valid_values: "
+                    f"{old_valid!r} -> {new_valid!r}"
+                ),
+            )
 
-    if old_choices != new_choices:
-        add(
-            "PARAMETER_UI_CHOICES_CHANGED",
-            "input",
-            (
-                f"{name}.input.choices: "
-                f"{old_choices!r} -> {new_choices!r}"
-            ),
-            material=False,
-        )
+        old_choices = parameter_ui_choices(old)
+        new_choices = parameter_ui_choices(new)
 
-    old_allow_custom = (old.get("input") or {}).get("allow_custom")
-    new_allow_custom = (new.get("input") or {}).get("allow_custom")
+        if old_choices != new_choices:
+            add(
+                "PARAMETER_UI_CHOICES_CHANGED",
+                "input",
+                (
+                    f"{name}.input.choices: "
+                    f"{old_choices!r} -> {new_choices!r}"
+                ),
+                material=False,
+            )
 
-    if old_allow_custom != new_allow_custom:
-        add(
-            "PARAMETER_INPUT_UI_CHANGED",
-            "input",
-            (
-                f"{name}.input.allow_custom: "
-                f"{old_allow_custom!r} -> {new_allow_custom!r}"
-            ),
-            material=False,
-        )
+        old_allow_custom = (old.get("input") or {}).get("allow_custom")
+        new_allow_custom = (new.get("input") or {}).get("allow_custom")
+
+        if old_allow_custom != new_allow_custom:
+            add(
+                "PARAMETER_INPUT_UI_CHANGED",
+                "input",
+                (
+                    f"{name}.input.allow_custom: "
+                    f"{old_allow_custom!r} -> {new_allow_custom!r}"
+                ),
+                material=False,
+            )
 
 
 # ------------------------------------------------------------------
 # Declared access and effects
 # ------------------------------------------------------------------
 
-old_exec = approved.get("execution") or {}
-new_exec = candidate.get("execution") or {}
+old_exec = object_value(approved.get("execution"))
+new_exec = object_value(candidate.get("execution"))
 
 old_priv = old_exec.get("privileged_access")
 new_priv = new_exec.get("privileged_access")
 
 
 def privileged_access_capabilities(value):
-    if value in (None, "", "none"):
+    if value == "none":
         return frozenset()
 
     if value == "browser":
@@ -1088,7 +1176,7 @@ new_priv_capabilities = (
 
 declared_access_expansion = False
 
-if old_priv != new_priv:
+if comparable("execution.privileged_access") and old_priv != new_priv:
     add(
         "PRIVILEGED_ACCESS_CHANGED",
         "access",
@@ -1106,8 +1194,8 @@ if old_priv != new_priv:
         declared_access_expansion = True
 
 
-old_req = approved.get("requirements") or {}
-new_req = candidate.get("requirements") or {}
+old_req = object_value(approved.get("requirements"))
+new_req = object_value(candidate.get("requirements"))
 
 for field, domain, added_code, removed_code in (
     (
@@ -1129,10 +1217,9 @@ for field, domain, added_code, removed_code in (
         "NPM_REQUIREMENT_REMOVED",
     ),
 ):
-    added, removed = set_delta(
-        old_req.get(field) or [],
-        new_req.get(field) or [],
-    )
+    if not comparable("requirements." + field):
+        continue
+    added, removed = set_delta(old_req[field], new_req[field])
 
     if added:
         add(
@@ -1156,19 +1243,10 @@ for field, domain, added_code, removed_code in (
 # A fingerprint change is a material identity change, not an
 # endpoint expansion.
 
-old_endpoints_disclosed, old_endpoints_raw = (
-    disclosed_value(
-        old_req,
-        "endpoints",
-    )
-)
-
-new_endpoints_disclosed, new_endpoints_raw = (
-    disclosed_value(
-        new_req,
-        "endpoints",
-    )
-)
+old_endpoints_disclosed = approved_evidence["requirements.endpoints"] == KNOWN
+new_endpoints_disclosed = candidate_evidence["requirements.endpoints"] == KNOWN
+old_endpoints_raw = old_req.get("endpoints")
+new_endpoints_raw = new_req.get("endpoints")
 
 endpoints_comparison_available = (
     old_endpoints_disclosed
@@ -1261,10 +1339,10 @@ for endpoint in sorted(
         )
 
 
-old_auth = approved.get("authentication") or {}
-new_auth = candidate.get("authentication") or {}
+old_auth = object_value(approved.get("authentication"))
+new_auth = object_value(candidate.get("authentication"))
 
-if old_auth.get("read_only") != new_auth.get("read_only"):
+if comparable("authentication.read_only") and old_auth.get("read_only") != new_auth.get("read_only"):
     add(
         "AUTHENTICATION_MODE_CHANGED",
         "access",
@@ -1282,13 +1360,11 @@ if old_auth.get("read_only") != new_auth.get("read_only"):
         declared_access_expansion = True
 
 
-old_auth_adapters = auth_adapter_map(
-    old_auth.get("adapters")
-)
+old_auth_adapters = (auth_adapter_map(old_auth["adapters"])
+                     if comparable("authentication.adapters") else {})
 
-new_auth_adapters = auth_adapter_map(
-    new_auth.get("adapters")
-)
+new_auth_adapters = (auth_adapter_map(new_auth["adapters"])
+                     if comparable("authentication.adapters") else {})
 
 for adapter in sorted(
     old_auth_adapters.keys() -
@@ -1318,173 +1394,178 @@ for adapter in sorted(
     old_adapter = old_auth_adapters[adapter]
     new_adapter = new_auth_adapters[adapter]
 
-    old_credentials = string_set(
-        old_adapter.get("credential_names")
-    )
-
-    new_credentials = string_set(
-        new_adapter.get("credential_names")
-    )
-
-    for credential in sorted(
-        new_credentials - old_credentials
-    ):
-        add(
-            "AUTH_CREDENTIAL_REQUIREMENT_ADDED",
-            "authentication",
-            (
-                f"{adapter}: credential requirement "
-                f"{credential!r} added"
-            ),
+    if comparable("authentication.credential_names"):
+        old_credentials = string_set(
+            old_adapter.get("credential_names")
         )
 
-    for credential in sorted(
-        old_credentials - new_credentials
-    ):
-        add(
-            "AUTH_CREDENTIAL_REQUIREMENT_REMOVED",
-            "authentication",
-            (
-                f"{adapter}: credential requirement "
-                f"{credential!r} removed"
-            ),
+        new_credentials = string_set(
+            new_adapter.get("credential_names")
         )
 
-    old_protocols = string_set(
-        old_adapter.get("protocols")
-    )
+        for credential in sorted(
+            new_credentials - old_credentials
+        ):
+            add(
+                "AUTH_CREDENTIAL_REQUIREMENT_ADDED",
+                "authentication",
+                (
+                    f"{adapter}: credential requirement "
+                    f"{credential!r} added"
+                ),
+            )
 
-    new_protocols = string_set(
-        new_adapter.get("protocols")
-    )
+        for credential in sorted(
+            old_credentials - new_credentials
+        ):
+            add(
+                "AUTH_CREDENTIAL_REQUIREMENT_REMOVED",
+                "authentication",
+                (
+                    f"{adapter}: credential requirement "
+                    f"{credential!r} removed"
+                ),
+            )
 
-    for protocol in sorted(
-        new_protocols - old_protocols
-    ):
-        add(
-            "AUTH_PROTOCOL_ADDED",
-            "authentication",
-            (
-                f"{adapter}: authentication protocol "
-                f"{protocol!r} added"
-            ),
+
+    if comparable("authentication.protocols"):
+        old_protocols = string_set(
+            old_adapter.get("protocols")
         )
 
-    for protocol in sorted(
-        old_protocols - new_protocols
-    ):
-        add(
-            "AUTH_PROTOCOL_REMOVED",
-            "authentication",
-            (
-                f"{adapter}: authentication protocol "
-                f"{protocol!r} removed"
-            ),
+        new_protocols = string_set(
+            new_adapter.get("protocols")
         )
+
+        for protocol in sorted(
+            new_protocols - old_protocols
+        ):
+            add(
+                "AUTH_PROTOCOL_ADDED",
+                "authentication",
+                (
+                    f"{adapter}: authentication protocol "
+                    f"{protocol!r} added"
+                ),
+            )
+
+        for protocol in sorted(
+            old_protocols - new_protocols
+        ):
+            add(
+                "AUTH_PROTOCOL_REMOVED",
+                "authentication",
+                (
+                    f"{adapter}: authentication protocol "
+                    f"{protocol!r} removed"
+                ),
+            )
 
 
 # ------------------------------------------------------------------
 # Runtime requirements
 # ------------------------------------------------------------------
 
-old_runtimes = by_name(old_req.get("runtimes"))
-new_runtimes = by_name(new_req.get("runtimes"))
+if comparable("requirements.runtimes"):
+    old_runtimes = by_name(old_req.get("runtimes"))
+    new_runtimes = by_name(new_req.get("runtimes"))
 
-for name in sorted(old_runtimes.keys() - new_runtimes.keys()):
-    add(
-        "RUNTIME_REQUIREMENT_REMOVED",
-        "runtime",
-        f"{name}: removed",
-    )
-
-for name in sorted(new_runtimes.keys() - old_runtimes.keys()):
-    add(
-        "RUNTIME_REQUIREMENT_ADDED",
-        "runtime",
-        f"{name}: added",
-    )
-
-for name in sorted(old_runtimes.keys() & new_runtimes.keys()):
-    old = old_runtimes[name]
-    new = new_runtimes[name]
-
-    comparable_old = {
-        "required": old.get("required"),
-        "managed_by": old.get("managed_by"),
-        "reason": old.get("reason"),
-    }
-
-    comparable_new = {
-        "required": new.get("required"),
-        "managed_by": new.get("managed_by"),
-        "reason": new.get("reason"),
-    }
-
-    if comparable_old != comparable_new:
+    for name in sorted(old_runtimes.keys() - new_runtimes.keys()):
         add(
-            "RUNTIME_REQUIREMENT_CHANGED",
+            "RUNTIME_REQUIREMENT_REMOVED",
             "runtime",
-            f"{name}: runtime contract changed",
+            f"{name}: removed",
         )
 
-
-old_tools = by_name(
-    (approved.get("package") or {}).get("tools"),
-    key="id",
-)
-
-new_tools = by_name(
-    (candidate.get("package") or {}).get("tools"),
-    key="id",
-)
-
-for name in sorted(old_tools.keys() - new_tools.keys()):
-    add(
-        "TOOL_REQUIREMENT_REMOVED",
-        "runtime",
-        f"{name}: removed",
-        material=False,
-    )
-
-for name in sorted(new_tools.keys() - old_tools.keys()):
-    add(
-        "TOOL_REQUIREMENT_ADDED",
-        "runtime",
-        f"{name}: added",
-        material=False,
-    )
-
-for name in sorted(old_tools.keys() & new_tools.keys()):
-    old = old_tools[name]
-    new = new_tools[name]
-
-    comparable_old = {
-        "command": old.get("command"),
-        "required": old.get("required"),
-        "version_requirement": old.get("version_requirement"),
-    }
-
-    comparable_new = {
-        "command": new.get("command"),
-        "required": new.get("required"),
-        "version_requirement": new.get("version_requirement"),
-    }
-
-    if comparable_old != comparable_new:
+    for name in sorted(new_runtimes.keys() - old_runtimes.keys()):
         add(
-            "TOOL_REQUIREMENT_CHANGED",
+            "RUNTIME_REQUIREMENT_ADDED",
             "runtime",
-            f"{name}: tool requirement changed",
-            material=False,
+            f"{name}: added",
         )
+
+    for name in sorted(old_runtimes.keys() & new_runtimes.keys()):
+        old = old_runtimes[name]
+        new = new_runtimes[name]
+
+        comparable_old = {
+            "required": old.get("required"),
+            "managed_by": old.get("managed_by"),
+            "reason": old.get("reason"),
+        }
+
+        comparable_new = {
+            "required": new.get("required"),
+            "managed_by": new.get("managed_by"),
+            "reason": new.get("reason"),
+        }
+
+        if comparable_old != comparable_new:
+            add(
+                "RUNTIME_REQUIREMENT_CHANGED",
+                "runtime",
+                f"{name}: runtime contract changed",
+            )
+
+
+if comparable("package.tools"):
+    old_tools = by_name(
+        object_value(approved.get("package")).get("tools"),
+        key="id",
+    )
+
+    new_tools = by_name(
+        object_value(candidate.get("package")).get("tools"),
+        key="id",
+    )
+
+    for name in sorted(old_tools.keys() - new_tools.keys()):
+        add(
+            "TOOL_REQUIREMENT_REMOVED",
+            "runtime",
+            f"{name}: removed",
+            material=old_tools[name]["required"],
+        )
+
+    for name in sorted(new_tools.keys() - old_tools.keys()):
+        add(
+            "TOOL_REQUIREMENT_ADDED",
+            "runtime",
+            f"{name}: added",
+            material=new_tools[name]["required"],
+        )
+
+    for name in sorted(old_tools.keys() & new_tools.keys()):
+        old = old_tools[name]
+        new = new_tools[name]
+
+        comparable_old = {
+            "command": old.get("command"),
+            "required": old.get("required"),
+            "version_requirement": old.get("version_requirement"),
+        }
+
+        comparable_new = {
+            "command": new.get("command"),
+            "required": new.get("required"),
+            "version_requirement": new.get("version_requirement"),
+        }
+
+        if comparable_old != comparable_new:
+            add(
+                "TOOL_REQUIREMENT_CHANGED",
+                "runtime",
+                f"{name}: tool requirement changed",
+                material=old["required"] or new["required"],
+            )
 
 
 # ------------------------------------------------------------------
 # Execution graph
 # ------------------------------------------------------------------
 
-old_steps = by_name(approved.get("steps"))
-new_steps = by_name(candidate.get("steps"))
+old_steps = by_name(approved["steps"]) if comparable("steps") else {}
+new_steps = by_name(candidate["steps"]) if comparable("steps") else {}
 
 graph_changed = False
 
@@ -1521,8 +1602,8 @@ for name in sorted(old_steps.keys() & new_steps.keys()):
             )
             graph_changed = True
 
-    old_deps = sorted(old.get("depends_on") or [])
-    new_deps = sorted(new.get("depends_on") or [])
+    old_deps = sorted(old.get("depends_on", []))
+    new_deps = sorted(new.get("depends_on", []))
 
     if old_deps != new_deps:
         add(
@@ -1559,25 +1640,25 @@ DISCLOSURE_FIELDS = (
 
 
 def unknown_disclosure_fields(play):
-    requirements = play.get("requirements") or {}
+    requirements = object_value(play.get("requirements"))
 
     return sorted(
         field
         for field in DISCLOSURE_FIELDS
         if (
-            isinstance(requirements.get(field), dict)
-            and requirements[field].get("status") == "unknown"
+            not isinstance(requirements.get(field), dict)
+            or requirements[field].get("status") != "known"
         )
     )
 
 
-approved_unknown_disclosures = (
-    unknown_disclosure_fields(approved)
-)
+approved_unknown_disclosures = sorted(set(unknown_disclosure_fields(approved)) | {
+    domain for domain, state in approved_evidence.items() if state != KNOWN
+})
 
-candidate_unknown_disclosures = (
-    unknown_disclosure_fields(candidate)
-)
+candidate_unknown_disclosures = sorted(set(unknown_disclosure_fields(candidate)) | {
+    domain for domain, state in candidate_evidence.items() if state != KNOWN
+})
 
 
 disclosure_unknowns = sorted(
@@ -1663,6 +1744,12 @@ if old_visibility != new_visibility:
 # the approved and candidate release.
 NON_DELTA_NOTICE_CODES = {
     "CANDIDATE_PACKAGE_NOT_VERIFIED",
+    "ARTIFACT_IDENTITY_DISCLOSURE_CHANGED",
+    "PACKAGE_FILESET_DISCLOSURE_CHANGED",
+    "PACKAGE_AUTHORITY_DISCLOSURE_CHANGED",
+    "DECLARED_ENDPOINT_DISCLOSURE_CHANGED",
+    "ENDPOINT_FINGERPRINT_DISCLOSURE_CHANGED",
+    "DISCLOSURE_COVERAGE_CHANGED",
 }
 
 pre_verdict_delta_codes = {
@@ -1723,6 +1810,9 @@ integrity_anomaly = (
 if integrity_anomaly:
     verdict = "INTEGRITY_ANOMALY"
 
+elif not comparison_complete:
+    verdict = "COMPARISON_INCOMPLETE"
+
 elif (
     same_version
     and not implementation_changed
@@ -1755,24 +1845,24 @@ result = {
     "schema": "play-change-review/v1",
     "ok": True,
     "verdict": verdict,
-    "comparison_performed": True,
+    "comparison_performed": any(row["comparable"] for row in comparison_domains.values()),
 
     "approved": {
         "identity": identity_text(aid),
         "content_hash": old_hash,
         "package_digest": old_digest,
-        "step_count": len(old_steps),
+        "step_count": len(old_steps) if comparable("steps") else None,
     },
 
     "candidate": {
         "identity": identity_text(cid),
         "content_hash": new_hash,
         "package_digest": new_digest,
-        "step_count": len(new_steps),
+        "step_count": len(new_steps) if comparable("steps") else None,
     },
 
     "declared_access_expansion_observed":
-        declared_access_expansion,
+        declared_access_expansion if access_comparison_complete else None,
 
     "counts": {
         "material_types": len({
@@ -1791,13 +1881,11 @@ result = {
     "inspection_coverage": {
         "source": "rote play inspect --json",
 
-        "execution_step_fields_compared": [
-            "name",
-            "kind",
-            "target",
-            "operation",
-            "depends_on",
-        ],
+        "comparison_complete": comparison_complete,
+        "access_comparison_complete": access_comparison_complete,
+        "domains": comparison_domains,
+        "execution_step_fields_compared": STEP_FIELDS if comparable("steps") else [],
+        "additional_disclosure_contents_compared": False,
 
         "step_command_argv_body_compared": False,
 

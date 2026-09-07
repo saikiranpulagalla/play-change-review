@@ -213,9 +213,12 @@ def test_endpoint_loss_is_not_reduction():
     check(
         result[
             "declared_access_expansion_observed"
-        ] is False,
+        ] is None,
         result,
     )
+
+    check(result["verdict"] == "COMPARISON_INCOMPLETE", result)
+    check(result["inspection_coverage"]["access_comparison_complete"] is False, result)
 
 
 def test_parameter_description_same_version_is_anomaly():
